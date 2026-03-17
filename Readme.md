@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://YOUR-VIDEO-LINK-HERE">
+  <a href="https://www.facebook.com/100000517003874/videos/pcb.1522782572892053/979481888307515">
     <img src="docs/images/video-preview.jpg" alt="Video Preview" width="70%">
   </a>
 </p>
@@ -36,8 +36,9 @@
 Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Raspberry Pi 5** bereit, die speziell für den Einsatz mit **Autodarts** optimiert wurden.
 
 - **Raspberry Pi 4**: Headless-Installation
+**[download_LINK](https://github.com/maxmustermann/meinrepo)**
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche
-
+**[download_LINK](https://github.com/maxmustermann/meinrepo)**
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
 ---
