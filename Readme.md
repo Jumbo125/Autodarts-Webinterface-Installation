@@ -17,11 +17,9 @@
   <img src="docs/images/Webinterface_3.png" alt="Autodarts Raspberry Images Preview" width="100%">
 </p>
 
-<p align="center">
-  <a href="https://www.facebook.com/100000517003874/videos/pcb.1522782572892053/979481888307515">
-    <img src="docs/images/video-preview.jpg" alt="Video Preview" width="70%">
-  </a>
-</p>
+
+[![Video Preview](./images/facebook-video-preview.png)](https://www.facebook.com/100000517003874/videos/pcb.1522782572892053/979481888307515)
+
 
 <p align="center">
   <em>Click the preview image to watch the video.</em>
