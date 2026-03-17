@@ -19,7 +19,7 @@
 
 
 [Beispielvideo 1](https://www.facebook.com/share/v/1DtWDdw2eK/)
-https://www.facebook.com/share/v/1DjUeZvd2H/
+
 [Beispielvideo 2](https://www.facebook.com/share/v/1DjUeZvd2H/)
 
 <p align="center">
