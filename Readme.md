@@ -137,6 +137,12 @@ Wichtig ist dabei weniger die maximale Geschwindigkeit, sondern vor allem:
 
 Das System ist darauf vorbereitet, optional eine **LED** sowie einen **Schalter / Taster** zu integrieren.
 
+<p align="center">
+  <img src="docs/images/Raspberry_1.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
+  <img src="docs/images/Raspberry_2.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
+  <img src="docs/images/GPIOS.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
+</p>
+
 #### Sicheres Herunterfahren
 
 Wird der Schalter länger als **4 Sekunden** gedrückt, blinkt die LED schnell und der Raspberry Pi führt einen **Safe Shutdown** aus.
