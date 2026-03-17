@@ -36,10 +36,12 @@
 Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Raspberry Pi 5** bereit, die speziell für den Einsatz mit **Autodarts** optimiert wurden.
 
 - **Raspberry Pi 4**: Headless-Installation
+
 **[download_LINK](https://github.com/maxmustermann/meinrepo)**
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche
-**[download_LINK](https://github.com/maxmustermann/meinrepo)**
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
+
+**[download_LINK](https://github.com/maxmustermann/meinrepo)**
 
 ---
 
