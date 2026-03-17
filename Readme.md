@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/images/icon.png" alt="Autodarts Raspberry Images" width="180">
-</p>
-
 <h1 align="center">Autodarts Raspberry Images</h1>
 
 <p align="center">
@@ -17,6 +13,8 @@
 
 <p align="center">
   <img src="docs/images/Webinterface_1.png" alt="Autodarts Raspberry Images Preview" width="100%">
+  <img src="docs/images/Webinterface_2.png" alt="Autodarts Raspberry Images Preview" width="100%">
+  <img src="docs/images/Webinterface_3.png" alt="Autodarts Raspberry Images Preview" width="100%">
 </p>
 
 <p align="center">
@@ -37,7 +35,7 @@
 
 Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Raspberry Pi 5** bereit, die speziell für den Einsatz mit **Autodarts** optimiert wurden.
 
-- **Raspberry Pi 4**: Headless-Installation  
+- **Raspberry Pi 4**: Headless-Installation
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche
 
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
@@ -122,7 +120,7 @@ Bei einer Verbindung per **LAN-Kabel** ist kein zusätzlicher WLAN-Stick notwend
 
 1. **BrosTrend AC650 Linux USB WLAN-Stick**
 2. **AR9271 NetCard**  
-   *(günstigere, aber qualitativ schwächere Alternative)*
+   _(günstigere, aber qualitativ schwächere Alternative)_
 
 Wichtig ist dabei weniger die maximale Geschwindigkeit, sondern vor allem:
 
@@ -232,7 +230,7 @@ Diese Software wird ohne Gewährleistung bereitgestellt.
 
 This project provides two prepared images for **Raspberry Pi 4** and **Raspberry Pi 5**, optimized for use with **Autodarts**.
 
-- **Raspberry Pi 4**: Headless installation  
+- **Raspberry Pi 4**: Headless installation
 - **Raspberry Pi 5**: Full installation with graphical interface
 
 Autodarts starts automatically when the system boots, so the setup is ready to use immediately.
@@ -317,7 +315,7 @@ If you connect the device via **LAN cable**, no additional Wi-Fi dongle is neede
 
 1. **BrosTrend AC650 Linux USB WLAN Stick**
 2. **AR9271 NetCard**  
-   *(more affordable, but lower-quality alternative)*
+   _(more affordable, but lower-quality alternative)_
 
 The most important factors are not maximum speed, but:
 
@@ -418,4 +416,3 @@ or use this software, in whole or in part, for commercial purposes
 without my prior written consent.
 
 This software is provided without warranty.
-
