@@ -110,7 +110,7 @@ Nach dem Verbinden mit diesem WLAN ist die Weboberfläche im Browser unter folge
 `http://10.77.0.1`
 
 <p align="right">
-  <img src="docs/images/QR Codes.png" alt="Autodarts Raspberry Images Preview" width="100%">
+  <img src="docs/images/QR Codes.png" alt="Autodarts Raspberry Images Preview" width="10%">
 </p>
 ---
 
