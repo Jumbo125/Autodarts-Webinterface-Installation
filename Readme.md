@@ -36,11 +36,11 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 
 - **Raspberry Pi 4**: Headless-Installation
 
-**[download_LINK](https://github.com/maxmustermann/meinrepo)**
+**[download_LINK](https://www.dropbox.com/scl/fo/z126u74p1wanknowicr4m/APmREuvI8KmQRlnzGJjGl8k?rlkey=w0jujfewnrlkze1inc3n13sqs&st=lnjxbwm4&dl=0)**
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
-**[download_LINK](https://github.com/maxmustermann/meinrepo)**
+**[download_LINK](https://www.dropbox.com/scl/fo/b8djqibxu9bt15tceodcr/AC09tAXZ4FONwj2Vnfx3I-I?rlkey=i08nazdjtdvcfllavzs72mrp3&st=azf4rzuj&dl=0)**
 
 ---
 
@@ -109,6 +109,9 @@ Nach dem Verbinden mit diesem WLAN ist die Weboberfläche im Browser unter folge
 
 `http://10.77.0.1`
 
+<p align="right">
+  <img src="docs/images/QR Codes.png" alt="Autodarts Raspberry Images Preview" width="100%">
+</p>
 ---
 
 ### Verbindung mit dem Heimnetzwerk
