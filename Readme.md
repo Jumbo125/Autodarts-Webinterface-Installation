@@ -151,6 +151,9 @@ Das System ist darauf vorbereitet, optional eine **LED** sowie einen **Schalter 
   <img src="docs/images/GPIOS.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
+[Link zu den 3D Druckfiles](https://www.thingiverse.com/thing:7315470)
+**WICHTIGE INFORMATION** Bitte installieren sie nicht das Script von Thinkreverse, diese ganzen Scripte sind in diesen Images schon vorhanden
+
 #### Sicheres Herunterfahren
 
 Wird der Schalter länger als **4 Sekunden** gedrückt, blinkt die LED schnell und der Raspberry Pi führt einen **Safe Shutdown** aus.
@@ -188,6 +191,11 @@ Die Weboberfläche bietet zahlreiche Funktionen zur Einrichtung, Diagnose und Be
 - **WLED ist vorinstalliert**
 - bis zu **3 WLED-Controller** können gleichzeitig mit dem System betrieben werden
 - direkter Zugriff auf WLED-Lichteffekte über die Weboberfläche
+
+falls WLED verwendet wird, ist ein Geschlossenes Case empfehlenswert.
+Für den Winmau Plasma Light Ring habe ich dafür eine kostengünstige Lösung
+
+[Link zu den 3D Druckfiles](https://www.thingiverse.com/thing:7315431)
 
 **Admin-Bereich**
 
