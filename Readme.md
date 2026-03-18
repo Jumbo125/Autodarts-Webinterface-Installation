@@ -104,11 +104,12 @@ Beim Start des Raspberry Pi wird automatisch ein **Access Point** erstellt.
 
 - **WLAN-Name:** `Autodartsinstall1`
 - **Passwort:** `Autodarts1234`
-**Bei mehreren Dartboars kann der Accespoint auf einen anderen Namen unbennatn werden**
+**Bei mehreren Dartboars kann der Accespoint auf einen anderen Namen unbennant werden**
 
 Nach dem Verbinden mit diesem WLAN ist die Weboberfläche im Browser unter folgender Adresse erreichbar:
 
 `http://10.77.0.1`
+**WICHTIG** mit dem acces Point nur zum konfigureiren verbinden, nicht zum Spielen!! Zum Spielen bitte wieder auf ihr Internet-Wlan wechseln
 
 optional kann man zum Verbinden den QR_Code_1 Scannen und zum öffnen der Weboberfläche QR_Code_2
 Der Qr Code ist so konzepiert das man diesen Drucken kan und auf den Kameraarm Kleben kann. Siehe Download Link
@@ -117,7 +118,8 @@ Der Qr Code ist so konzepiert das man diesen Drucken kan und auf den Kameraarm K
   <img src="docs/images/QR Codes.png" alt="Autodarts Raspberry Images Preview" width="10%">
 </p>
 
-Das Bild ist so konsipiert das man es als Foto drucken kann (10x15cm).(Bipa,Dm, div andere Märkte mit Fotodruck)
+Das Bild ist so konsipiert das man es als Foto drucken kann (10x15cm).(Bipa,Dm, div andere Märkte mit Fotodruck) falls man den Accespoint auf einen anderen ändert, so gibt es auch andere QR Codes zu drucken.
+Das ändern des Acces Point ist nur bei mehreren Dartboards(Raspis) im gleichen Raum Notwendig.
 [Link zu den 3D Druckfiles](https://www.dropbox.com/scl/fi/k3hhatwmse8bv53vuwgyk/1_Rahmen.jpg?rlkey=fcvrptmzaix6rz6qcitygbun3&st=jwbzoerh&dl=0)
 
 ---
