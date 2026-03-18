@@ -196,7 +196,7 @@ falls WLED verwendet wird, ist ein Geschlossenes Case empfehlenswert.
 Für den Winmau Plasma Light Ring habe ich dafür eine kostengünstige Lösung
 
 <p align="center">
-  <img src="docs/images/Dart_Case.jpg" alt="Autodarts Raspberry Images Preview" width="50%">
+  <img src="docs/images/Dart_Case.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
 [Link zu den 3D Druckfiles](https://www.thingiverse.com/thing:7315431)
