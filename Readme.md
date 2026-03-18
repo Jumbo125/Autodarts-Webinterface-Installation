@@ -185,6 +185,9 @@ Die Weboberfläche bietet zahlreiche Funktionen zur Einrichtung, Diagnose und Be
 - direkter Zugriff auf den Dartboardmanager, auch wenn dieser noch nicht mit einem Autodarts-Account verknüpft ist
 - Wechsel zwischen verschiedenen Versionen
 - Fokussieren und Scharfstellen jeder einzelnen Kamera im Vollbildmodus für bessere Genauigkeit
+- u.v.m.
+
+---
 
 **WLED-Unterstützung**
 
