@@ -34,10 +34,10 @@
 
 Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Raspberry Pi 5** bereit, die speziell für den Einsatz mit **Autodarts** optimiert wurden.
 
-- **Raspberry Pi 4**: Headless-Installation
+- **Raspberry Pi 4**: Headless-Installation inkl QR Codes
 
 **[download_LINK](https://www.dropbox.com/scl/fo/z126u74p1wanknowicr4m/APmREuvI8KmQRlnzGJjGl8k?rlkey=w0jujfewnrlkze1inc3n13sqs&st=lnjxbwm4&dl=0)**
-- **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche
+- **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche inkl QR Codes
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
 **[download_LINK](https://www.dropbox.com/scl/fo/b8djqibxu9bt15tceodcr/AC09tAXZ4FONwj2Vnfx3I-I?rlkey=i08nazdjtdvcfllavzs72mrp3&st=azf4rzuj&dl=0)**
@@ -104,14 +104,19 @@ Beim Start des Raspberry Pi wird automatisch ein **Access Point** erstellt.
 
 - **WLAN-Name:** `Autodartsinstall1`
 - **Passwort:** `Autodarts1234`
+**Bei mehreren Dartboars kann der Accespoint auf einen anderen Namen unbennatn werden**
 
 Nach dem Verbinden mit diesem WLAN ist die Weboberfläche im Browser unter folgender Adresse erreichbar:
 
 `http://10.77.0.1`
 
-<p align="right">
+optional kann man zum Verbinden den QR_Code_1 Scannen und zum öffnen der Weboberfläche QR_Code_2
+Der Qr Code ist so konzepiert das man diesen Drucken kan und auf den Kameraarm Kleben kann. Siehe Download Link
+
+<p align="center">
   <img src="docs/images/QR Codes.png" alt="Autodarts Raspberry Images Preview" width="10%">
 </p>
+
 ---
 
 ### Verbindung mit dem Heimnetzwerk
