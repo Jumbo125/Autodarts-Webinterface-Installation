@@ -201,6 +201,8 @@ Für den Winmau Plasma Light Ring habe ich dafür eine kostengünstige Lösung
 
 [Link zu den 3D Druckfiles](https://www.thingiverse.com/thing:7315431)
 
+---
+
 **Admin-Bereich**
 
 Im Admin-Bereich stehen zusätzliche Verwaltungsfunktionen zur Verfügung:
