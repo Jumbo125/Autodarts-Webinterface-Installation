@@ -117,6 +117,9 @@ Der Qr Code ist so konzepiert das man diesen Drucken kan und auf den Kameraarm K
   <img src="docs/images/QR Codes.png" alt="Autodarts Raspberry Images Preview" width="10%">
 </p>
 
+Das Bild ist so konsipiert das man es als Foto drucken kann (10x15cm).(Bipa,Dm, div andere Märkte mit Fotodruck)
+[Link zu den 3D Druckfiles](https://www.dropbox.com/scl/fi/k3hhatwmse8bv53vuwgyk/1_Rahmen.jpg?rlkey=fcvrptmzaix6rz6qcitygbun3&st=jwbzoerh&dl=0)
+
 ---
 
 ### Verbindung mit dem Heimnetzwerk
