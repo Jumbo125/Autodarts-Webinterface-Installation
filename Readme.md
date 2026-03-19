@@ -44,7 +44,7 @@ Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt ei
 **[download_LINK](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/Raspberry_Pi5_64bit_Debian_13_trixie_GUI_Full-Image.xz)**
 
 Installation
-<p align="center">
+<p align="left">
   <img src="docs/images/Raspi_imager_1.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
   <img src="docs/images/Raspi_imager_2.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
