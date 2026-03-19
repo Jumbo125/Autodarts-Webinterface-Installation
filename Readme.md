@@ -36,11 +36,12 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 
 - **Raspberry Pi 4**: Headless-Installation inkl QR Codes
 
-**[download_LINK](https://github.com/Jumbo125/pageflip-plugin-joomla/releases/download/V1.0.2/Autodarts_Raspi_4_64bit_Debian_13_trixie.img.xz)**
+**[download_LINK](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/Raspberry_Pi4_64bit_Debian_13_trixie_Headless_Full-Image.xz)**
+
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche inkl QR Codes
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
-**[download_LINK](https://www.dropbox.com/scl/fo/b8djqibxu9bt15tceodcr/AC09tAXZ4FONwj2Vnfx3I-I?rlkey=i08nazdjtdvcfllavzs72mrp3&st=azf4rzuj&dl=0)**
+**[download_LINK](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/Raspberry_Pi5_64bit_Debian_13_trixie_GUI_Full-Image.xz)**
 
 ---
 
@@ -120,7 +121,7 @@ Der Qr Code ist so konzepiert das man diesen Drucken kan und auf den Kameraarm K
 
 Das Bild ist so konsipiert das man es als Foto drucken kann (10x15cm).(Bipa,Dm, div andere Märkte mit Fotodruck) falls man den Accespoint auf einen anderen ändert, so gibt es auch andere QR Codes zu drucken.
 Das ändern des Acces Point ist nur bei mehreren Dartboards(Raspis) im gleichen Raum Notwendig.
-[Link zu den 3D Druckfiles](https://www.dropbox.com/scl/fi/k3hhatwmse8bv53vuwgyk/1_Rahmen.jpg?rlkey=fcvrptmzaix6rz6qcitygbun3&st=jwbzoerh&dl=0)
+[Link zu den 3D Druckfiles](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/QR_Codes.zip)
 
 ---
 
