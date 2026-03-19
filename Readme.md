@@ -36,7 +36,7 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 
 - **Raspberry Pi 4**: Headless-Installation inkl QR Codes
 
-**[download_LINK](https://www.dropbox.com/scl/fo/z126u74p1wanknowicr4m/APmREuvI8KmQRlnzGJjGl8k?rlkey=w0jujfewnrlkze1inc3n13sqs&st=lnjxbwm4&dl=0)**
+**[download_LINK](https://github.com/Jumbo125/pageflip-plugin-joomla/releases/download/V1.0.2/Autodarts_Raspi_4_64bit_Debian_13_trixie.img.xz)**
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche inkl QR Codes
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
