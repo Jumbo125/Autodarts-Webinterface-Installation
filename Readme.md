@@ -121,7 +121,7 @@ Der Qr Code ist so konzepiert das man diesen Drucken kan und auf den Kameraarm K
 
 Das Bild ist so konsipiert das man es als Foto drucken kann (10x15cm).(Bipa,Dm, div andere Märkte mit Fotodruck) falls man den Accespoint auf einen anderen ändert, so gibt es auch andere QR Codes zu drucken.
 Das ändern des Acces Point ist nur bei mehreren Dartboards(Raspis) im gleichen Raum Notwendig.
-[Link zu den 3D Druckfiles](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/QR_Codes.zip)
+[Link zu den QR-Codes](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/QR_Codes.zip)
 
 ---
 
