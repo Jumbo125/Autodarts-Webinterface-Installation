@@ -1,0 +1,165 @@
+
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verbindungstest</title>
+  <style>
+    body { font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#111; color:#eee; margin:0; padding:0; }
+    .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+    h1 { font-size: 1.6rem; margin: 0 0 10px; }
+    .card { background:#1c1c1c; border-radius:12px; padding:16px 18px 18px; margin-bottom:18px; box-shadow:0 0 20px rgba(0,0,0,0.4); border:1px solid #333; }
+    .hint { font-size:0.9rem; opacity:0.8; white-space:pre-wrap; }
+    .btn-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .btn { display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#222; color:#eee; text-decoration:none; cursor:pointer; }
+    .btn-primary { background:#2563eb; border-color:#2563eb; }
+    .btn-disabled { opacity:0.5; pointer-events:none; }
+    pre { background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:10px 0 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Verbindungstest (30 Pakete)</h1>
+
+    <div class="card">
+      <div class="hint" style="margin-top:0;">
+        Dieser Test pingt den <strong>Gateway/Router</strong> (nicht autodarts.io) und zeigt Paketverlust &amp; Latenz.
+        Dauer: ca. 30 Sekunden.
+      </div>
+
+      <div id="st" class="hint" style="margin-top:10px;">Starte…</div>
+
+      <div style="height:10px; background:#0b0b0b; border:1px solid #333; border-radius:999px; overflow:hidden; margin-top:10px;">
+        <div id="bar" style="height:100%; width:0%; background:#3b82f6;"></div>
+      </div>
+
+      <pre id="out">—</pre>
+
+      <div class="btn-row">
+        <a href="{{ url_for('index') }}" class="btn">Zurück</a>
+        <button type="button" id="again" class="btn btn-primary">Erneut starten</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const st = document.getElementById('st');
+  const bar = document.getElementById('bar');
+  const out = document.getElementById('out');
+  const again = document.getElementById('again');
+
+  function setProgress(done, total){
+    const pct = total ? Math.max(0, Math.min(100, Math.round((done/total)*100))) : 0;
+    if(bar) bar.style.width = pct + '%';
+  }
+
+  function classify(s, total, recv){
+    const sent = Number(s.count || total || 30);
+    const rec = Number(recv || 0);
+    if(!sent || sent <= 0) return {label:'Unbekannt', loss:null};
+
+    const lost = Math.max(0, sent - rec);
+    const loss = Math.round((lost * 1000) / sent) / 10;
+
+    const minMs = (s.min_ms != null) ? Number(s.min_ms) : null;
+    const maxMs = (s.max_ms != null) ? Number(s.max_ms) : null;
+    const avgMs = (s.avg_ms != null) ? Number(s.avg_ms) : null;
+
+    if(minMs === null || maxMs === null || avgMs === null){
+      if(loss === 0) return {label:'Gute Verbindung', loss};
+      if(loss < 3) return {label:'Könnte funktionieren', loss};
+      return {label:'Nicht mehr spielbar', loss};
+    }
+
+    if(loss === 0 && avgMs <= 30 && maxMs <= 60) return {label:'Super Verbindung', loss};
+    if(loss < 1 && avgMs <= 60 && maxMs <= 120) return {label:'Gute Verbindung', loss};
+    if(loss < 3 && avgMs <= 120 && maxMs <= 300) return {label:'Könnte funktionieren', loss};
+    return {label:'Nicht mehr spielbar', loss};
+  }
+
+  async function run(){
+    if(again){
+      again.classList.add('btn-disabled');
+      again.disabled = true;
+    }
+    if(out) out.textContent = '—';
+    if(st) st.textContent = 'Starte…';
+    setProgress(0, 30);
+
+    try{
+      const r = await fetch('/wifi/ping/start', {method:'POST', cache:'no-store'});
+      const j = await r.json().catch(()=>({ok:false,msg:'Ungültige Antwort'}));
+      if(!j.ok){
+        if(st) st.textContent = j.msg || 'Ping konnte nicht gestartet werden.';
+        if(out) out.textContent = (j.msg || 'Fehler');
+        if(again){ again.classList.remove('btn-disabled'); again.disabled = false; }
+        return;
+      }
+
+      const jobId = j.job_id;
+      const total = 30;
+      let tries = 0;
+
+      const timer = setInterval(async ()=>{
+        tries += 1;
+        try{
+          const rs = await fetch('/wifi/ping/status/' + jobId, {cache:'no-store'});
+          const s = await rs.json().catch(()=>({ok:false,msg:'Ungültige Antwort'}));
+          if(!s.ok){
+            clearInterval(timer);
+            if(st) st.textContent = s.msg || 'Fehler beim Status.';
+            if(out) out.textContent = (s.msg || 'Fehler');
+            if(again){ again.classList.remove('btn-disabled'); again.disabled = false; }
+            return;
+          }
+
+          const prog = Number(s.progress||0);
+          const recv = Number(s.received||0);
+          if(st) st.textContent = `${prog} von ${total} Paketen… (empfangen: ${recv})`;
+          setProgress(prog, total);
+
+          if(s.done){
+            clearInterval(timer);
+
+            const q = classify(s, total, recv);
+            let result = `${recv} von ${Number(s.count || total)} Paketen wurden erfolgreich gesendet.`;
+            if(q.loss != null) result += ` · Paketverlust: ${q.loss}%`;
+            if(s.min_ms!=null && s.max_ms!=null && s.avg_ms!=null){
+              result += ` Schnellstes: ${s.min_ms} ms · Langsamstes: ${s.max_ms} ms · Durchschnitt: ${s.avg_ms} ms`;
+            }
+            if(s.error) result += ` (Hinweis: ${s.error})`;
+
+            const via = (s && s.iface_label) ? (s.iface_label + "\n") : "";
+            if(out) out.textContent = via + `Verbindungsqualität: ${q.label}\n` + result;
+            if(st) st.textContent = 'Fertig.';
+            setProgress(total, total);
+
+            if(again){ again.classList.remove('btn-disabled'); again.disabled = false; }
+          }
+        }catch(e){
+          if(tries > 120){
+            clearInterval(timer);
+            if(st) st.textContent = 'Timeout.';
+            if(out) out.textContent = 'Verbindungstest abgebrochen (Timeout).';
+            if(again){ again.classList.remove('btn-disabled'); again.disabled = false; }
+          }
+        }
+      }, 600);
+
+    }catch(e){
+      if(st) st.textContent = 'Fehlgeschlagen.';
+      if(out) out.textContent = 'Verbindungstest fehlgeschlagen.';
+      if(again){ again.classList.remove('btn-disabled'); again.disabled = false; }
+    }
+  }
+
+  if(again){
+    again.addEventListener('click', run);
+  }
+  run();
+})();
+</script>
+</body>
+</html>

@@ -12,9 +12,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/Webinterface_1.png" alt="Autodarts Raspberry Images Preview" width="100%">
-  <img src="docs/images/Webinterface_2.png" alt="Autodarts Raspberry Images Preview" width="100%">
-  <img src="docs/images/Webinterface_3.png" alt="Autodarts Raspberry Images Preview" width="100%">
+  <img src="docs/images/Webinterface_1.png" alt="Autodarts Raspberry Images Preview" width="70%">
+  <img src="docs/images/Webinterface_2.png" alt="Autodarts Raspberry Images Preview" width="70%">
+  <img src="docs/images/Webinterface_3.png" alt="Autodarts Raspberry Images Preview" width="70%">
 </p>
 
 
