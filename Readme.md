@@ -18,9 +18,8 @@
 </p>
 
 
-[Beispielvideo 1](https://www.facebook.com/share/v/1DtWDdw2eK/)
+<h1 align="center">[vorschauvideo](https://www.facebook.com/share/v/1DtWDdw2eK/)</h1>
 
-[Beispielvideo 2](https://www.facebook.com/share/v/1DjUeZvd2H/)
 
 <p align="center">
   <em>Click the preview image to watch the video.</em>
