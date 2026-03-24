@@ -1,7 +1,13 @@
 <h1 align="center">Autodarts Raspberry Images</h1>
 
+<p align="center">
+  <a href="https://youtu.be/5hvhzvziHqw?si=Kufan6Pahj1dObHE">
+    <img src="https://img.youtube.com/vi/5hvhzvziHqw/maxresdefault.jpg" alt="Vorschauvideo" width="700">
+  </a>
+</p>
+
 <h2 align="center">
-  <a href="https://youtu.be/5hvhzvziHqw?si=Kufan6Pahj1dObHE">🎥 Vorschauvideo</a>
+  <a href="https://youtu.be/5hvhzvziHqw?si=Kufan6Pahj1dObHE">Vorschauvideo ansehen</a>
 </h2>
 
 <p align="center">
