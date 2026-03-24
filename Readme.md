@@ -38,18 +38,22 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 
 - **Raspberry Pi 4**: Headless-Installation inkl QR Codes
 
-**[download_LINK](https://autodarts-pi4-download.peter-2b8.workers.dev)**
+**[download_LINK](https://autodarts-pi4-download.peter-2b8.workers.dev/download)**
 
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche inkl QR Codes
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
-**[download_LINK](https://autodarts-pi5-download.peter-2b8.workers.dev)**
+**[download_LINK](https://autodarts-pi5-download.peter-2b8.workers.dev/download)**
 
 **Installation**  --> "Eigenes Image" wählen
 <p align="left">
   <img src="docs/images/Raspi_imager_1.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
   <img src="docs/images/Raspi_imager_2.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
+
+[Video_Installation_1](https://youtu.be/8HfXLsrC0aU?si=0_X5_AfhemH9foJv)
+[Video_Installation_2](https://youtu.be/-iefM-2gB9o?si=R8utpYmP1am8nPCt)
+
 ---
 
 ### Unterstützte Systeme
