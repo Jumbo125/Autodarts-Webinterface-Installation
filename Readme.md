@@ -34,6 +34,8 @@
 
 Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Raspberry Pi 5** bereit, die speziell für den Einsatz mit **Autodarts** optimiert wurden.
 
+**ZUSATZNOTIZ: Bitte sobald als Möglich immer das Webpanel bei euch updaten, damit ihr die neuersten Features habt**
+
 - **Raspberry Pi 4**: Headless-Installation inkl QR Codes
 
 **[download_LINK](autodarts-pi5-download.peter-2b8.workers.dev)**
