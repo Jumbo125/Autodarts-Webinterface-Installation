@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://youtu.be/vZOtYZ-dGQs"> 
-    <img src="https://img.youtube.com/vi/5hvhzvziHqw/maxresdefault.jpg" alt="Vorschauvideo" width="700">
+    <img src="https://img.youtube.com/vi/vZOtYZ-dGQs/maxresdefault.jpg" alt="Vorschauvideo" width="700">
   </a>
 </p>
 
@@ -57,8 +57,8 @@ Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt ei
   <img src="docs/images/Raspi_imager_2.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
-[Video_Installation_1](https://youtu.be/8HfXLsrC0aU?si=0_X5_AfhemH9foJv)
-[Video_Installation_2](https://youtu.be/-iefM-2gB9o?si=R8utpYmP1am8nPCt)
+[Video_Installation_1](https://youtu.be/MPp4fZqoqj4)
+[Video_Installation_2](https://youtu.be/VT4V8c9nuxs)
 
 ---
 
