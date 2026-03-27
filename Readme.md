@@ -237,7 +237,7 @@ Der Link zum download der WLED Einstellung folgt in kürze
 [Link zu den 3D Druckfiles](https://www.thingiverse.com/thing:7315431)
 
 **Darts-Hub**
-Was ist Darts-Hub?
+(Was ist Darts-Hub?)
   -  Vereinfacht gesagt, Dartshub ist ein mächtiges, extrem gut durchdachtes Tool, eine Grafische Oberfläche das unter anderem zum bedienen verschiedener anderer Programme verwendet wird.
     zum steuertn von LED-Effekten wird der Darts-caller und der Darts-WLED Dienst benötigt. Das sind beides System vom gleichen Entwickler wie der Caller und der WLED Dienst.
     Damit man diese konfigurieren kann, benötigt man IT wissen!! Damit es einfacher wird gibt es den Darts-Hub der eben auf diese beiden System steuert.
