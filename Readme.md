@@ -1,17 +1,17 @@
 <p align="center">
-  <a href="README.md">🇬🇧 English</a> | <a href="README.de.md">🇩🇪 Deutsch</a>
+  🇩🇪 Deutsch | <a href="README.en.md">🇬🇧 English</a>
 </p>
 
 <h1 align="center">Autodarts Raspberry Images</h1>
 
 <p align="center">
   <a href="https://youtu.be/vZOtYZ-dGQs"> 
-    <img src="https://img.youtube.com/vi/vZOtYZ-dGQs/maxresdefault.jpg" alt="Preview video" width="700">
+    <img src="https://img.youtube.com/vi/vZOtYZ-dGQs/maxresdefault.jpg" alt="Vorschauvideo" width="700">
   </a>
 </p>
 
 <h2 align="center">
-  <a href="https://youtu.be/vZOtYZ-dGQs">Watch preview video</a>
+  <a href="https://youtu.be/vZOtYZ-dGQs">Vorschauvideo ansehen</a>
 </h2>
 
 <p align="center">
@@ -32,34 +32,34 @@
 </p>
 
 <p align="center">
-  <em>Click the preview image to watch the video.</em>
+  <em>Klicke auf das Vorschaubild, um das Video anzusehen.</em>
 </p>
 
 ---
 
-## 🇬🇧 English
+## 🇩🇪 Deutsch
 
-### Description
+### Beschreibung
 
-This project provides two preconfigured images for **Raspberry Pi 4** and **Raspberry Pi 5**, specially optimized for use with **Autodarts**.
+Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Raspberry Pi 5** bereit, die speziell für den Einsatz mit **Autodarts** optimiert wurden.
 
-**ADDITIONAL NOTE: Please update the web panel as soon as possible whenever a new version is available so you always have the latest features.**
+**ZUSATZNOTIZ: Bitte sobald wie möglich immer das Webpanel updaten, damit ihr die neuesten Features habt.**
 
-- **Raspberry Pi 4**: Headless installation including QR codes
-- **Raspberry Pi 5**: Full installation with graphical user interface including QR codes  
-  Autodarts starts automatically when the system boots, so the setup is ready to use immediately.
-
----
-
-# 🚧 Download currently unavailable
-
-**The download link is currently disabled due to a major update.**
-
-## Available again from **29.03.**
+- **Raspberry Pi 4**: Headless-Installation inklusive QR-Codes
+- **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche inklusive QR-Codes  
+  Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
 ---
 
-**Installation** --> Select `Use custom image`
+# 🚧 Download derzeit nicht verfügbar
+
+**Wegen eines größeren Updates ist der Download-Link aktuell deaktiviert.**
+
+## Wieder verfügbar ab **29.03.**
+
+---
+
+**Installation** --> „Eigenes Image“ wählen
 
 <p align="left">
   <img src="docs/images/Raspi_imager_1.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
@@ -71,116 +71,115 @@ This project provides two preconfigured images for **Raspberry Pi 4** and **Rasp
 
 ---
 
-### Supported systems
+### Unterstützte Systeme
 
-#### Raspberry Pi 4 – Headless installation
+#### Raspberry Pi 4 – Headless-Installation
 
-The Raspberry Pi 4 version is designed as a **headless system**.  
-**No monitor, mouse, or keyboard** is required.
+Die Raspberry-Pi-4-Variante ist als **Headless-System** ausgelegt.  
+Es werden **kein Monitor, keine Maus und keine Tastatur** benötigt.
 
-Only the following need to be connected:
+Angeschlossen werden lediglich:
 
-- the cameras
-- optionally a LAN cable
-- or a compatible Wi-Fi stick
+- die Kameras
+- optional ein LAN-Kabel
+- oder ein kompatibler WLAN-Stick
 
-Since the Raspberry Pi 4 runs without a graphical interface, it is operated from an external device, for example:
+Da der Raspberry Pi 4 ohne grafische Oberfläche betrieben wird, erfolgt die Bedienung über ein externes Gerät, zum Beispiel:
 
-- tablet
-- notebook
+- Tablet
+- Notebook
 - PC
-- smartphone
+- Smartphone
 
-#### Raspberry Pi 5 – Full installation
+#### Raspberry Pi 5 – Full-Installation
 
-The Raspberry Pi 5 version is designed as a **full installation with graphical user interface**.
+Die Raspberry-Pi-5-Variante ist als **vollwertige Installation mit grafischer Oberfläche** vorgesehen.
 
-Required hardware:
+Hierfür werden benötigt:
 
-- monitor
-- mouse
-- keyboard
-- Wi-Fi dongle or LAN cable
+- Monitor
+- Maus
+- Tastatur
+- WLAN-Dongle oder LAN-Kabel
 
-After startup, Autodarts opens automatically in the browser.
+Nach dem Start öffnet sich Autodarts automatisch im Browser.
 
 ---
 
-### Hardware requirements
+### Hardware-Anforderungen
 
 #### Raspberry Pi 4
 
-- at least **2 GB RAM**
-- **active cooling required**
+- mindestens **2 GB RAM**
+- **aktive Kühlung** erforderlich
 
-**Note:**  
-The Raspberry Pi 4 is not powerful enough for this use case to provide a smooth graphical user interface permanently. For that reason, this version is intentionally designed as a headless setup.
+**Hinweis:**  
+Der Raspberry Pi 4 ist für diese Anwendung nicht leistungsstark genug, um dauerhaft eine flüssige grafische Oberfläche bereitzustellen. Deshalb wird hier bewusst auf eine Headless-Lösung gesetzt.
 
 #### Raspberry Pi 5
 
-- at least **4 GB RAM**
-- **active cooling required**
+- mindestens **4 GB RAM**
+- **aktive Kühlung** erforderlich
 
 ---
 
-### Network and initial configuration
+### Netzwerk und Erstkonfiguration
 
-When the Raspberry Pi starts, an **access point** is automatically created.
+Beim Start des Raspberry Pi wird automatisch ein **Access Point** erstellt.
 
-**Default credentials**
+**Standard-Zugangsdaten**
 
-- **Wi-Fi name:** `Autodartsinstall1`
-- **Password:** `Autodarts1234`  
-  **If you have multiple dartboards, the access point can be renamed.**
+- **WLAN-Name:** `Autodartsinstall1`
+- **Passwort:** `Autodarts1234`  
+  **Bei mehreren Dartboards kann der Access Point auf einen anderen Namen umbenannt werden.**
 
-After connecting to this Wi-Fi, the web interface can be accessed in the browser at:
+Nach dem Verbinden mit diesem WLAN ist die Weboberfläche im Browser unter folgender Adresse erreichbar:
 
 `http://10.77.0.1`
 
-**IMPORTANT:** Only connect to the access point for configuration, not for playing. For playing, switch back to your normal home/internet Wi-Fi.
+**WICHTIG:** Mit dem Access Point nur zum Konfigurieren verbinden, nicht zum Spielen. Zum Spielen bitte wieder auf das Internet-/Heim-WLAN wechseln.
 
-Optionally, you can scan **QR_Code_1** to connect and **QR_Code_2** to open the web interface.  
-The QR code layout is designed so it can be printed and attached to the camera arm. See the download link.
+Optional kann man zum Verbinden den **QR_Code_1** scannen und zum Öffnen der Weboberfläche **QR_Code_2**.  
+Der QR-Code ist so konzipiert, dass man ihn drucken und auf den Kameraarm kleben kann. Siehe Download-Link.
 
 <p align="center">
   <img src="docs/images/QR Codes.png" alt="Autodarts Raspberry Images Preview" width="10%">
 </p>
 
-The image is designed to be printed as a photo (10x15 cm)  
-(for example at Bipa, dm, or other stores with photo printing).  
-If the access point name is changed, different QR codes can also be generated and printed.
+Das Bild ist so konzipiert, dass man es als Foto drucken kann (10x15 cm)  
+(z. B. bei Bipa, dm oder anderen Märkten mit Fotodruck). Wenn man den Access Point auf einen anderen Namen ändert, gibt es auch andere QR-Codes zum Drucken.
 
-Changing the access point name is only necessary if multiple dartboards (Raspberry Pis) are used in the same room.
+Das Ändern des Access Points ist nur bei mehreren Dartboards (Raspis) im gleichen Raum notwendig.
 
-[Link to the QR codes](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/QR_Codes.zip)
+[Link zu den QR-Codes](https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/QR_Codes.zip)
 
 ---
 
-### Connection to your home network
+### Verbindung mit dem Heimnetzwerk
 
-If the Raspberry Pi should be connected to your home Wi-Fi or the internet via Wi-Fi, an **external Wi-Fi antenna or USB Wi-Fi stick** is required.
+Wenn der Raspberry Pi per WLAN mit dem Heimnetzwerk oder dem Internet verbunden werden soll, ist eine **externe WLAN-Antenne bzw. ein USB-WLAN-Stick** erforderlich.
 
-The internal Wi-Fi chip of the Raspberry Pi is already used for the access point.  
-If you use a **LAN cable**, no additional Wi-Fi stick is needed.
+Der interne WLAN-Chip des Raspberry Pi wird bereits für den Access Point verwendet.  
+Bei einer Verbindung per **LAN-Kabel** ist kein zusätzlicher WLAN-Stick notwendig.
 
-**Recommended Wi-Fi dongles**
+**Empfohlene WLAN-Dongles**
 
-1. **BrosTrend AC650 Linux USB Wi-Fi Stick**
+1. **BrosTrend AC650 Linux USB WLAN-Stick**
 2. **AR9271 NetCard**  
-   _(cheaper, but lower-quality alternative)_
+   _(günstigere, aber qualitativ schwächere Alternative)_
 
-What matters most is not maximum speed, but rather:
+Wichtig ist dabei weniger die maximale Geschwindigkeit, sondern vor allem:
 
-- stable connection
-- low latency
-- low jitter
-- no connection dropouts
+- stabile Verbindung
+- geringe Latenz
+- niedriger Jitter
+- keine Verbindungsabbrüche
 
 ---
 
-### Optional hardware: LED and switch
+### Optionale Hardware: LED und Schalter
 
-The system is prepared to optionally integrate an **LED** and a **switch / button**.
+Das System ist darauf vorbereitet, optional eine **LED** sowie einen **Schalter / Taster** zu integrieren.
 
 <p align="center">
   <img src="docs/images/Raspberry_1.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
@@ -188,123 +187,123 @@ The system is prepared to optionally integrate an **LED** and a **switch / butto
   <img src="docs/images/GPIOS.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
-[Link to the 3D print files](https://www.thingiverse.com/thing:7315470)
+[Link zu den 3D-Druckfiles](https://www.thingiverse.com/thing:7315470)
 
-**IMPORTANT INFORMATION:** Please do not install the Thinkreverse script. All of those scripts are already included in these images.
+**WICHTIGE INFORMATION:** Bitte installiere nicht das Script von Thinkreverse. Diese ganzen Scripts sind in diesen Images bereits vorhanden.
 
-#### Safe shutdown
+#### Sicheres Herunterfahren
 
-If the switch is pressed for more than **4 seconds**, the LED starts blinking quickly and the Raspberry Pi performs a **safe shutdown**.
+Wird der Schalter länger als **4 Sekunden** gedrückt, blinkt die LED schnell und der Raspberry Pi führt einen **Safe Shutdown** aus.
 
-This helps protect the system and the SD card.
+Dadurch werden System und SD-Karte geschützt.
 
-#### Restarting the Autodarts board manager
+#### Neustart des Autodarts Boardmanagers
 
-If the switch is pressed for about **3 seconds**, the **Autodarts board manager** is restarted.
+Wird der Schalter für etwa **3 Sekunden** gedrückt, wird der **Autodarts Boardmanager** neu gestartet.
 
-This is especially helpful if during gameplay:
+Das ist besonders hilfreich, wenn während des Spiels:
 
-- the system becomes sluggish
-- darts are detected with delay
-- hits are not detected reliably
+- das System träger reagiert
+- Darts verzögert erkannt werden
+- Treffer nicht zuverlässig erkannt werden
 
-In such cases, restarting the board manager is often enough without having to reboot the entire system.
-
----
-
-### Web interface features
-
-The web interface provides numerous functions for setup, diagnostics, and operation of the system.
-
-**General features**
-
-- easy connection to a Wi-Fi network
-- checking Wi-Fi/LAN connection for stability, packet loss, and speed
-- direct access to the dartboard manager, even if it is not yet linked to an Autodarts account
-- switching between different versions
-- focusing and sharpening each individual camera in fullscreen mode for better accuracy
-- and much more
+Ein Neustart des Boardmanagers kann in solchen Fällen oft bereits helfen, ohne das komplette System neu starten zu müssen.
 
 ---
 
-**WLED support**
+### Funktionen der Weboberfläche
 
-- **WLED is preinstalled**
-- **Darts-Hub is currently not installed; it is not required**
-- up to **3 WLED controllers** can be used with the system at the same time
-- direct access to WLED lighting effects through the web interface
+Die Weboberfläche bietet zahlreiche Funktionen zur Einrichtung, Diagnose und Bedienung des Systems.
 
-If WLED is used, a closed case is recommended.  
-For the Winmau Plasma Light Ring, I have created a low-cost solution for this.
+**Allgemeine Funktionen**
 
-The download link for the WLED settings will follow soon.
+- einfache Verbindung mit einem WLAN-Netzwerk
+- Prüfung der WLAN-/LAN-Verbindung auf Stabilität, Paketverluste und Geschwindigkeit
+- direkter Zugriff auf den Dartboardmanager, auch wenn dieser noch nicht mit einem Autodarts-Account verknüpft ist
+- Wechsel zwischen verschiedenen Versionen
+- Fokussieren und Scharfstellen jeder einzelnen Kamera im Vollbildmodus für bessere Genauigkeit
+- u. v. m.
+
+---
+
+**WLED-Unterstützung**
+
+- **WLED ist vorinstalliert**
+- **zurzeit ist Darts-Hub nicht installiert, es wird nicht benötigt**
+- bis zu **3 WLED-Controller** können gleichzeitig mit dem System betrieben werden
+- direkter Zugriff auf WLED-Lichteffekte über die Weboberfläche
+
+Falls WLED verwendet wird, ist ein geschlossenes Case empfehlenswert.  
+Für den Winmau Plasma Light Ring habe ich dafür eine kostengünstige Lösung.
+
+Der Link zum Download der WLED-Einstellungen folgt in Kürze.
 
 <p align="center">
   <img src="docs/images/Dart_Case.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
-[Link to the 3D print files](https://www.thingiverse.com/thing:7315431)
+[Link zu den 3D-Druckfiles](https://www.thingiverse.com/thing:7315431)
 
 **Darts-Hub**  
-(What is Darts-Hub?)
+(Was ist Darts-Hub?)
 
-- Simply put, Darts-Hub is a powerful and very well-designed graphical interface that is used, among other things, to control various other programs.
-- To control LED effects, the `darts-caller` and `darts-wled` services are required. Both are systems from the same developer.
-- Configuring them requires some IT knowledge.
-- To make this easier, Darts-Hub provides a user interface for controlling these systems.
-- However, this does not work on the Raspberry Pi 4.
-- To still make LED effects available there, I created a separate interface for configuring those effects.
-- Anyone using a Raspberry Pi 5 setup can install Darts-Hub later. If I find the time, I may add it directly to the Raspberry Pi 5 image in the future.
-
----
-
-**Admin area**
-
-The admin area provides additional management functions:
-
-- updating the complete web panel
-- installing the **UVC Hack**
-- enabling / disabling the firewall
-- additional system and administration functions
+- Vereinfacht gesagt ist Darts-Hub ein mächtiges, extrem gut durchdachtes Tool bzw. eine grafische Oberfläche, die unter anderem zum Bedienen verschiedener anderer Programme verwendet wird.
+- Zum Steuern von LED-Effekten werden der `darts-caller`- und der `darts-wled`-Dienst benötigt. Das sind beides Systeme vom gleichen Entwickler.
+- Damit man diese konfigurieren kann, benötigt man IT-Wissen.
+- Damit es einfacher wird, gibt es den Darts-Hub, der diese beiden Systeme steuert.
+- Das geht aber nicht am Raspberry Pi 4.
+- Damit man dennoch LED-Effekte hat, habe ich eine eigene Oberfläche zum Einstellen dieser Effekte gemacht.
+- Alle, die ein Raspberry-Pi-5-Setup haben, können diesen nachträglich installieren. Wenn ich Zeit habe, mache ich das zukünftig direkt für die Raspberry-Pi-5-Datei.
 
 ---
 
-### Third-party software used
+**Admin-Bereich**
 
-This project uses or references third-party software and components.  
-All rights remain with the respective original authors.
+Im Admin-Bereich stehen zusätzliche Verwaltungsfunktionen zur Verfügung:
+
+- Update des kompletten Webpanels
+- Installation des **UVC Hack**
+- Aktivieren / Deaktivieren der Firewall
+- weitere System- und Verwaltungsfunktionen
+
+---
+
+### Verwendete Drittsoftware
+
+Dieses Projekt nutzt bzw. bezieht sich auf Software und Komponenten Dritter.  
+Die jeweiligen Rechte verbleiben bei den ursprünglichen Urhebern.
 
 - **Autodarts**  
   Repository: `https://github.com/ddhille/autodarts-releases`  
-  License: **MIT License**
+  Lizenz: **MIT License**
 
 - **Darts Caller**  
   Repository: `https://github.com/lbormann/darts-caller`  
-  License: **GNU GPL v3**
+  Lizenz: **GNU GPL v3**
 
 - **Darts WLED**  
   Repository: `https://github.com/lbormann/darts-wled`  
-  License: **GNU GPL v3**
+  Lizenz: **GNU GPL v3**
 
-Please note that only the respective license terms of third-party software apply to those components.
+Bitte beachte, dass für Drittsoftware ausschließlich deren jeweilige Lizenzbedingungen gelten.
 
 ---
 
-### Copyright and usage restrictions
+### Copyright und Nutzungsbeschränkung
 
 **Copyright (c) 2026 Peter Rottmann**
 
-Unless otherwise stated, the following usage restrictions apply exclusively to the parts of the project created by me.
+Soweit nicht anders angegeben, beziehen sich die folgenden Nutzungsbeschränkungen ausschließlich auf die von mir erstellten Projektbestandteile.
 
-**This project is not Open Source.**  
-**No use, modification, or redistribution without explicit written permission.**
+**Dieses Projekt ist nicht Open Source.**  
+**Keine Nutzung, Veränderung oder Weitergabe ohne ausdrückliche schriftliche Erlaubnis.**
 
-**All rights reserved.**
+**Alle Rechte vorbehalten.**
 
-It is not permitted to copy this software, in whole or in part,  
-modify it, redistribute it, publish it, sublicense it,  
-or use it commercially without my prior written consent.
+Es ist nicht gestattet, diese Software ganz oder teilweise zu kopieren,  
+zu verändern, weiterzugeben, zu veröffentlichen, zu sublicenzieren  
+oder kommerziell zu nutzen, außer mit meiner vorherigen schriftlichen Zustimmung.
 
-This software is provided without warranty.
+Diese Software wird ohne Gewährleistung bereitgestellt.
 
 ---
