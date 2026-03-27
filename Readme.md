@@ -47,7 +47,15 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche inkl QR Codes
 Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
 
-**download link kurzfristig down aufgrund größeren Updates, ab 29.03 wieder erreichbar**
+---
+
+# 🚧 Download derzeit nicht verfügbar
+
+**Wegen eines größeren Updates ist der Download-Link aktuell deaktiviert.**
+
+## Wieder verfügbar ab **29.03.**
+
+---
 
 **Installation**  --> "Eigenes Image" wählen
 <p align="left">
@@ -213,6 +221,7 @@ Die Weboberfläche bietet zahlreiche Funktionen zur Einrichtung, Diagnose und Be
 **WLED-Unterstützung**
 
 - **WLED ist vorinstalliert**
+- **zurzeit ist Darts-Hub nicht installiert, es wird nicht benötigt**
 - bis zu **3 WLED-Controller** können gleichzeitig mit dem System betrieben werden
 - direkter Zugriff auf WLED-Lichteffekte über die Weboberfläche
 
@@ -226,6 +235,14 @@ Der Link zum download der WLED Einstellung folgt in kürze
 </p>
 
 [Link zu den 3D Druckfiles](https://www.thingiverse.com/thing:7315431)
+
+**Darts-Hub**
+Was ist Darts-Hub?
+  -  Vereinfacht gesagt, Dartshub ist ein mächtiges, extrem gut durchdachtes Tool, eine Grafische Oberfläche das unter anderem zum bedienen verschiedener anderer Programme verwendet wird.
+    zum steuertn von LED-Effekten wird der Darts-caller und der Darts-WLED Dienst benötigt. Das sind beides System vom gleichen Entwickler wie der Caller und der WLED Dienst.
+    Damit man diese konfigurieren kann, benötigt man IT wissen!! Damit es einfacher wird gibt es den Darts-Hub der eben auf diese beiden System steuert.
+    Das geht aber nicht am RAspi4, damit man dennoch LED effekte hat, hab ich eben eine Oberfläche zum einstellen dieser Effekte gemacht.
+Alle diejenigen die ein Raspberry Pi5 Setup haben, können diesen nachträglich installieren. Wenn ich Zeit habe, mache ich das zukünftig für die Raspberry Pi5 Datei.
 
 ---
 
