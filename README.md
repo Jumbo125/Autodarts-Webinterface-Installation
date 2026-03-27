@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://youtu.be/vZOtYZ-dGQs"> 
-    <img src="https://img.youtube.com/vi/vZOtYZ-dGQs/maxresdefault.jpg" alt="Vorschauvideo" width="700">
+    <img src="https://img.youtube.com/vi/vZOtYZ-dGQs/maxresdefault.jpg" alt="Vorschauvideo" width="400">
   </a>
 </p>
 
