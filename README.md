@@ -135,6 +135,10 @@ Beim Start des Raspberry Pi wird automatisch ein **Access Point** erstellt.
 - **Passwort:** `Autodarts1234`  
   **Bei mehreren Dartboards kann der Access Point auf einen anderen Namen umbenannt werden.**
 
+Sollte jemand mal den Anmeldenamen für installationen etc. benötigen
+  - Name: Autodart
+  - Pw: Autodarts1234
+
 Nach dem Verbinden mit diesem WLAN ist die Weboberfläche im Browser unter folgender Adresse erreichbar:
 
 `http://10.77.0.1`
