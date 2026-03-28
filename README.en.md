@@ -136,7 +136,7 @@ When the Raspberry Pi starts, an **access point** is automatically created.
 - **Password:** `Autodarts1234`  
   **If you have multiple dartboards, the access point can be renamed.**
 
-  If anyone ever needs the login name for installations, etc.
+  If anyone ever needs the login name for installations, etc., this is only available starting with the image file dated 28 March 2026.
   - Name: Autodart
   - Password: Autodarts1234
 
