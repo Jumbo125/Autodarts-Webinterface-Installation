@@ -135,7 +135,7 @@ Beim Start des Raspberry Pi wird automatisch ein **Access Point** erstellt.
 - **Passwort:** `Autodarts1234`  
   **Bei mehreren Dartboards kann der Access Point auf einen anderen Namen umbenannt werden.**
 
-Sollte jemand mal den Anmeldenamen für installationen etc. benötigen
+Sollte jemand mal den Anmeldenamen für installationen etc. benötigen. Erst seit Image Datei ab 28.03.2026 möglich.
   - Name: Autodart
   - Pw: Autodarts1234
 
