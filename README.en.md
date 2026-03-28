@@ -136,6 +136,10 @@ When the Raspberry Pi starts, an **access point** is automatically created.
 - **Password:** `Autodarts1234`  
   **If you have multiple dartboards, the access point can be renamed.**
 
+  If anyone ever needs the login name for installations, etc.
+  - Name: Autodart
+  - Password: Autodarts1234
+
 After connecting to this Wi-Fi, the web interface can be accessed in the browser at:
 
 `http://10.77.0.1`
