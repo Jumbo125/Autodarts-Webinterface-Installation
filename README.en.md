@@ -54,11 +54,11 @@ This project provides two preconfigured images for **Raspberry Pi 4** and **Rasp
 
 ---
 
-# 🚧 Download currently unavailable
+# 🎉 Download is available again!
 
-**The download link is currently disabled due to a major update.**
+## ✅ Downloads are available again from now on.
 
-## Available again from **29.03.**
+**The update has been completed. Thank you for your patience!**
 
 ---
 
