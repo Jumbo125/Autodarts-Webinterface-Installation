@@ -70,7 +70,7 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 
 [Video_Installation_1](https://youtu.be/MPp4fZqoqj4)  
 [Video_Installation_2](https://youtu.be/VT4V8c9nuxs) 
-[Video_Installation_3](https://youtu.be/6hG4y4xWFNk)
+[Video_Installation_3](https://youtu.be/ccjEAH0Mx2Q) 
 
 ---
 
