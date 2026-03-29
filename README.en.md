@@ -52,14 +52,6 @@ This project provides two preconfigured images for **Raspberry Pi 4** and **Rasp
 
 ---
 
-# 🎉 Download is available again!
-
-## ✅ Downloads are available again from now on.
-
-**The update has been completed. Thank you for your patience!**
-
----
-
 **Installation** --> Select `Use custom image`
 
 <p align="left">
