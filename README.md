@@ -71,7 +71,7 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 
 #### Raspberry Pi 4 – Headless-Installation
 
-<p align="center">
+<p align="left">
   <img src="docs/images/Raspberry_Pi_4_installation.jpg" alt="Autodarts Raspberry Images Preview" width="30%">
 </p>
 
@@ -93,8 +93,8 @@ Da der Raspberry Pi 4 ohne grafische Oberfläche betrieben wird, erfolgt die Bed
 
 #### Raspberry Pi 5 – Full-Installation
 
-<p align="center">
-  <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="30%">
+<p align="left">
+  <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="40%">
 </p>
 
 Die Raspberry-Pi-5-Variante ist als **vollwertige Installation mit grafischer Oberfläche** vorgesehen.
