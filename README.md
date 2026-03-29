@@ -72,7 +72,7 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 #### Raspberry Pi 4 – Headless-Installation
 
 <p align="left">
-  <img src="docs/images/Raspberry_Pi_4_installation.jpg" alt="Autodarts Raspberry Images Preview" width="30%">
+  <img src="docs/images/Raspberry_Pi_4_installation.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
 Die Raspberry-Pi-4-Variante ist als **Headless-System** ausgelegt.  
