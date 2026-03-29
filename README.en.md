@@ -67,16 +67,20 @@ This project provides two preconfigured images for **Raspberry Pi 4** and **Rasp
   <img src="docs/images/Raspi_imager_2.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
-[Video_Installation_1](https://youtu.be/MPp4fZqoqj4)  
-[Video_Installation_2](https://youtu.be/VT4V8c9nuxs)
-[Video_Installation_3](https://youtu.be/ccjEAH0Mx2Q) 
+[Video_Installation_1#Verbinden](https://youtu.be/MPp4fZqoqj4)
+
+[Video_Installation_2#Erster Start](https://youtu.be/VT4V8c9nuxs)
+
+[Video_Installation_3#WLED](https://youtu.be/ccjEAH0Mx2Q)
 
 ---
 
 ### Supported systems
 
 #### Raspberry Pi 4 – Headless installation
-
+<p align="left">
+  <img src="docs/images/Raspberry_Pi_4_installation.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
+</p>
 The Raspberry Pi 4 version is designed as a **headless system**.  
 **No monitor, mouse, or keyboard** is required.
 
@@ -94,7 +98,9 @@ Since the Raspberry Pi 4 runs without a graphical interface, it is operated from
 - smartphone
 
 #### Raspberry Pi 5 – Full installation
-
+<p align="left">
+  <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="30%">
+</p>
 The Raspberry Pi 5 version is designed as a **full installation with graphical user interface**.
 
 Required hardware:
