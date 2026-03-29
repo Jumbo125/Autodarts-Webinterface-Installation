@@ -61,9 +61,9 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
   <img src="docs/images/Raspi_imager_2.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
-[Video_Installation_1](https://youtu.be/MPp4fZqoqj4)
-[Video_Installation_2](https://youtu.be/VT4V8c9nuxs)
-[Video_Installation_3](https://youtu.be/ccjEAH0Mx2Q)
+[Video_Installation_1#Verbinden](https://youtu.be/MPp4fZqoqj4)
+[Video_Installation_2#Erster Start](https://youtu.be/VT4V8c9nuxs)
+[Video_Installation_3#WLED](https://youtu.be/ccjEAH0Mx2Q)
 
 ---
 
@@ -92,11 +92,9 @@ Da der Raspberry Pi 4 ohne grafische Oberfläche betrieben wird, erfolgt die Bed
 - Smartphone
 
 #### Raspberry Pi 5 – Full-Installation
-
 <p align="left">
-  <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="40%">
+  <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="30%">
 </p>
-
 Die Raspberry-Pi-5-Variante ist als **vollwertige Installation mit grafischer Oberfläche** vorgesehen.
 
 Hierfür werden benötigt:
