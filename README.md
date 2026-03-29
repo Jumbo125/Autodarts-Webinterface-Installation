@@ -51,13 +51,6 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 - **Raspberry Pi 5**: Full-Installation mit grafischer Oberfläche inklusive QR-Codes  
   Beim Systemstart wird Autodarts automatisch geladen, sodass das System direkt einsatzbereit ist.
   **[download_LINK](https://autodarts-pi5-download.peter-2b8.workers.dev/download)**
----
-
-# 🎉 Download ist wieder verfügbar!
-
-## ✅ Ab sofort kann wieder heruntergeladen werden.
-
-**Das Update ist abgeschlossen. Vielen Dank für eure Geduld!**
 
 ---
 
@@ -68,15 +61,19 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
   <img src="docs/images/Raspi_imager_2.jpg" alt="Autodarts Raspberry Images Preview" width="20%">
 </p>
 
-[Video_Installation_1](https://youtu.be/MPp4fZqoqj4)  
-[Video_Installation_2](https://youtu.be/VT4V8c9nuxs) 
-[Video_Installation_3](https://youtu.be/ccjEAH0Mx2Q) 
+[Video_Installation_1](https://youtu.be/MPp4fZqoqj4)
+[Video_Installation_2](https://youtu.be/VT4V8c9nuxs)
+[Video_Installation_3](https://youtu.be/ccjEAH0Mx2Q)
 
 ---
 
 ### Unterstützte Systeme
 
 #### Raspberry Pi 4 – Headless-Installation
+
+<p align="center">
+  <img src="docs/images/Raspberry_Pi_4_installation.jpg" alt="Autodarts Raspberry Images Preview" width="60%">
+</p>
 
 Die Raspberry-Pi-4-Variante ist als **Headless-System** ausgelegt.  
 Es werden **kein Monitor, keine Maus und keine Tastatur** benötigt.
@@ -95,6 +92,10 @@ Da der Raspberry Pi 4 ohne grafische Oberfläche betrieben wird, erfolgt die Bed
 - Smartphone
 
 #### Raspberry Pi 5 – Full-Installation
+
+p align="center">
+  <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="60%">
+</p>
 
 Die Raspberry-Pi-5-Variante ist als **vollwertige Installation mit grafischer Oberfläche** vorgesehen.
 
