@@ -67,6 +67,10 @@ Dieses Projekt stellt zwei vorbereitete Images für **Raspberry Pi 4** und **Ras
 
 [Video_Installation_3#WLED](https://youtu.be/ccjEAH0Mx2Q)
 
+[Video_Installation_6#kamera Fokus perfekt einstellen](https://youtu.be/x6MqmHw6tCw)
+
+[Video_Installation_#Designe ändern_Caller hinzufügen](https://youtu.be/BYfNWcjFvbo)
+
 ---
 
 ### Unterstützte Systeme
