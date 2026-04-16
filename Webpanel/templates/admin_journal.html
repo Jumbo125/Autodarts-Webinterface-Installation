@@ -1,21 +1,30 @@
 <!doctype html>
+<!--
+Copyright (c) 2026 Peter Rottmann
+All rights reserved.
+Proprietary and not open source.
+No use, modification, distribution, publication, sublicensing,
+or commercial use without prior express written permission.
+Applies only to parts created by Peter Rottmann.
+Third-party components remain under their respective licenses.
+Provided "as is", without warranty.
+-->
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Live Logs</title>
-  <style>
-    body{font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0b0f14; color:#e6edf3; margin:0; padding:16px;}
-    .wrap{max-width:1100px; margin:0 auto;}
-    .top{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px;}
-    .btn{display:inline-block; padding:10px 12px; border-radius:10px; background:#1f2937; color:#e6edf3; text-decoration:none; border:1px solid #334155;}
-    .btn.active{background:#2563eb; border-color:#2563eb;}
-    .btn.danger{background:#7f1d1d; border-color:#7f1d1d;}
-    .hint{opacity:.8; font-size:14px; margin:6px 0 14px;}
-    #log{white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-         background:#0f172a; border:1px solid #243244; border-radius:14px; padding:12px; min-height:60vh; overflow:auto;}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-  </style>
+  <title data-key="journal.page_title">Live Logs</title>
+    <!-- favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon/favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon/favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}" />
+    <!-- favicon ende -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_journal.css') }}">
+   <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/admin_journal.js') }}"></script>
+
 </head>
 <body>
   <div class="wrap">
@@ -25,76 +34,19 @@
         <a class="btn" href="#" data-unit="darts-wled.service">darts-wled</a>
       </div>
       <div class="row" style="margin-left:auto;">
-        <a class="btn" href="#" id="btnPause">⏸ Pause</a>
-        <a class="btn" href="#" id="btnClear">🧹 Clear</a>
-        <a class="btn danger" href="#" id="btnClose">✖ Close</a>
+        <a class="btn" href="#" id="btnPause" data-key="journal.pause">⏸ Pause</a>
+        <a class="btn" href="#" id="btnClear" data-key="journal.clear">🧹 Clear</a>
+        <a class="btn danger" href="#" id="btnClose" data-key="journal.close">✖ Close</a>
       </div>
     </div>
     <div class="hint">
-      Live-Stream aus <code>journalctl -f -o cat</code>. (Admin-only) – Passwörter werden grob maskiert.
+      <span data-key="journal.hint.live_stream">Live-Stream aus</span>
+      <code>journalctl -f -o cat</code>.
+      <span data-key="journal.hint.admin_only">(Admin-only)</span>
+      –
+      <span data-key="journal.hint.passwords_masked">Passwörter werden grob maskiert.</span>
     </div>
     <div id="log"></div>
   </div>
-
-  <script>
-    let unit = "darts-caller.service";
-    let es = null;
-    let paused = false;
-    const logEl = document.getElementById("log");
-
-    function appendLine(s){
-      if(paused) return;
-      if(!s) return;
-      logEl.textContent += s + "
-";
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    function connect(){
-      if(es){ es.close(); es = null; }
-      appendLine("---- connecting: " + unit + " ----");
-      es = new EventSource("/admin/journal/stream?unit=" + encodeURIComponent(unit));
-      es.onmessage = (ev) => appendLine(ev.data);
-      es.onerror = () => {
-        appendLine("---- disconnected (retrying) ----");
-        try{ es.close(); }catch(e){}
-        es = null;
-        if(!paused){
-          setTimeout(connect, 1200);
-        }
-      };
-    }
-
-    document.getElementById("tabs").addEventListener("click", (e) => {
-      const a = e.target.closest("a[data-unit]");
-      if(!a) return;
-      e.preventDefault();
-      unit = a.getAttribute("data-unit");
-      [...document.querySelectorAll("#tabs a")].forEach(x => x.classList.remove("active"));
-      a.classList.add("active");
-      connect();
-    });
-
-    document.getElementById("btnPause").addEventListener("click", (e) => {
-      e.preventDefault();
-      paused = !paused;
-      e.target.textContent = paused ? "▶ Continue" : "⏸ Pause";
-      if(!paused && !es) connect();
-    });
-
-    document.getElementById("btnClear").addEventListener("click", (e) => {
-      e.preventDefault();
-      logEl.textContent = "";
-    });
-
-    document.getElementById("btnClose").addEventListener("click", (e) => {
-      e.preventDefault();
-      try{ if(es) es.close(); }catch(err){}
-      window.close();
-      setTimeout(()=>{ window.location.href = "/"; }, 100);
-    });
-
-    connect();
-  </script>
 </body>
 </html>

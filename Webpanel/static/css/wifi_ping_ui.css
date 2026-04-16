@@ -1,0 +1,88 @@
+/*
+ * Copyright (c) 2026 Peter Rottmann
+ * All rights reserved.
+ *
+ * This file is part of a proprietary project and is not open source.
+ * No use, modification, distribution, publication, sublicensing,
+ * or commercial use of this file, in whole or in part, is permitted
+ * without the prior express written permission of Peter Rottmann.
+ *
+ * Unless otherwise stated, these restrictions apply exclusively to
+ * the parts of this project created by Peter Rottmann.
+ * Third-party software and components remain subject to their
+ * respective license terms.
+ *
+ * This software is provided "as is", without warranty of any kind,
+ * express or implied, including but not limited to merchantability,
+ * fitness for a particular purpose, and noninfringement.
+ * In no event shall the author be liable for any claim, damages,
+ * or other liability arising from, out of, or in connection with
+ * the software or its use.
+ */
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: #111;
+  color: #eee;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 10px;
+}
+.card {
+  background: #1c1c1c;
+  border-radius: 12px;
+  padding: 16px 18px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid #333;
+}
+.hint {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  white-space: pre-wrap;
+}
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #444;
+  background: #222;
+  color: #eee;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.btn-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+pre {
+  background: #0b0b0b;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  overflow: auto;
+  white-space: pre-wrap;
+  margin: 10px 0 0;
+}

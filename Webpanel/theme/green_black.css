@@ -1,0 +1,239 @@
+/* Autor: Sven Kammann */
+/* Spielmodus: NOT FOR CRICKED!! */
+/* Bildschirmauflösung: 1920x1080 */
+
+
+:root{
+  --theme-bg: #000000;
+  --theme-text-color: #000000;
+  --theme-text-highlight-color: #9fdb58;
+  --theme-navigation-bg: #434343;
+  --theme-navigation-item-color: #666666;
+  --theme-player-badge-bg: #9fdb58;
+  --theme-current-bg: #0c343d;
+}
+div.css-gmuwbf {
+  background-color: var(--theme-background);
+}
+div.css-tkevr6 {
+  background-color: var(--theme-background);
+}
+div.chakra-stack.navigation.css-19ml6yu {
+  background-color: var(--theme-navigation-bg);
+}
+span.chakra-badge.css-1g1qw76 {
+  font-size: 30px;
+  background-color: var(--theme-player-name-bg);
+  display: none;
+}
+p.chakra-text.css-0 {
+  font-size: 30px;
+}
+button.chakra-button.css-d6eevf {
+  background-color: var(--theme-navigation-item-color);
+}
+p.chakra-text.css-1qlemha {
+  background-color: var(--theme-current-bg);
+  font-size: 30px;
+}
+span.css-bs3vp6 {
+  font-size: 30px;
+}
+span.css-elma0c {
+  background-color: #274e13;
+}
+span.css-5nep5l {
+  background-color: var(--theme-current-bg);
+}
+div.css-rrf7rv {
+  background-color: #274e13;
+  border-color: #434343;
+}
+div.css-nfhdnc {
+  background-color: var(--theme-bg);
+}
+span.chakra-badge.css-1j1ty0z {
+  font-size: 30px;
+}
+span.chakra-badge.css-1c4630i {
+  font-size: 30px;
+}
+span.chakra-badge.css-n2903v {
+  font-size: 30px;
+}
+/* Main Layout */
+.css-tkevr6 > .chakra-stack{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: max-content 1fr max-content;
+  max-width: 100%;
+}
+/* Header Layout */
+.css-tkevr6 > .chakra-stack > div.css-0:first-child:not(.chakra-wrap){
+  position: absolute;
+}
+.chakra-wrap.css-0, .css-k008qs{
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
+/* Player Avatar */
+.chakra-avatar{
+  --avatar-size: 2.5rem;
+}
+/* Bot Avatar */
+.css-7lnr9n{
+  width: 2.5rem;
+  height: 2.5rem;
+}
+/* Player: Layout */
+#ad-ext-player-display {
+  display:flex;
+  flex-direction: column;
+  align-items: stretch;
+  grid-column-start: 1;
+  grid-column-end: 2;
+  max-height: 80vh
+}
+/* Player: Tag */
+.css-1k3nd6z{
+  align-self: stretch;
+  font-size: 36px;
+}
+.css-g0ywsj{
+  min-width: auto;
+}
+.css-1k3nd6z > span{
+  justify-content: center;
+  height: 100%;
+}
+.css-3fr5p8 {
+  background-color: var(--theme-player-badge-bg);
+}
+.css-3fr5p8 > p{
+  font-size: 30px;
+}
+/* Player: Everage */
+.css-1j0bqop {
+  font-size: 25px;
+}
+/* Bottom Layout */
+#ad-ext-turn{
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
+div.css-17xejub {
+  grid-column-start: 2;
+}
+div.css-y3hfdd{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr;
+}
+div.css-y3hfdd > p{
+  color: var(--theme-text-highlight-color);
+  grid-row-start: 1;
+  grid-row-end: 3;
+  margin-bottom:0;
+}
+.css-1r7jzhg{
+  grid-column-start: 2;
+  grid-column-end: 3;
+  grid-row-start: 1;
+  grid-row-end: 3;
+}
+.css-37hv0{
+  grid-row-start: 1;
+  grid-row-end: 2;
+  grid-column-start: 1;
+  grid-column-end: 2;
+}
+.css-37hv00{
+  grid-row-start: 1;
+  grid-row-end: 2;
+  grid-column-start: 1;
+  grid-column-end: 2;
+  display: flex;
+  flex-wrap: nowrap;
+}
+.css-y3hfdd > .css-1igwmid{
+  grid-row-start: 2;
+  grid-row-end: 3;
+  grid-column-start: 1;
+  grid-column-end: 2;
+  padding-left:55px;
+}
+/* Scheibe */
+.css-1kejrvi, .css-14xtjvc{
+  grid-column-start: 2;
+  grid-column-end: 3;
+  grid-row-start: 2;
+  height: 100%;
+}
+.css-tqsk66{
+  padding-bottom: 50px;
+}
+.css-7bjx6y, .css-1wegtvo{
+  top: inherit;
+  bottom: 0;
+}
+
+div.chakra-stack.navigation.css-ege71s {
+  background-color: #222;
+  
+}
+
+p.chakra-text.ad-ext-player-score.css-18w03sn {
+  color: #9fdb58;
+}
+
+span.css-3fr5p8 {
+  background-color: #9fdb58;
+  color: #222;
+}
+
+p.chakra-text.ad-ext-player-score.css-1r7jzhg {
+  color: #9fdb58;
+}
+
+div.suggestion.css-1dkgpmk {
+  font-size: 6px;
+  background-color: #222;
+  border-color: #434343;
+}
+
+div.ad-ext-player.ad-ext-player-active.css-1en42kf {
+  border-color: #434343;
+  border-style: solid;
+}
+.css-1emway5 {
+  grid-column: 1 / 3;
+}
+div.chakra-menu__menu-list.css-yskgbr {
+  background-color: #434343;
+}
+
+button.chakra-tabs__tab.css-1vm7g5b {
+  color: #9fdb58;
+  
+}
+
+span.chakra-switch__track.css-v4l15v {
+  background-color: #38761d;
+}
+
+button.chakra-tabs__tab.css-1pjn7in {
+  color: #9fdb58;
+}
+
+p.chakra-text.css-1j0bqop {
+  display: none;
+}
+
+a.css-15iki5k {
+  opacity: 0;
+  
+}
+
+a.css-or32x1 {
+  opacity: 0;
+}

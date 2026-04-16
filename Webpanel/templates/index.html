@@ -1,639 +1,418 @@
-
 <!doctype html>
+<!--
+Copyright (c) 2026 Peter Rottmann
+All rights reserved.
+Proprietary and not open source.
+No use, modification, distribution, publication, sublicensing,
+or commercial use without prior express written permission.
+Applies only to parts created by Peter Rottmann.
+Third-party components remain under their respective licenses.
+Provided "as is", without warranty.
+-->
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <title>Autodarts Installation</title>
-  <style>
-    :root {
-      --text: #eef6ff;
-      --muted: rgba(235, 244, 255, 0.08);
-      --panel: rgba(7, 18, 43, 0.08);
-      --panel-strong: rgba(6, 14, 31, 0.08);
-      --line: rgba(255, 255, 255, 0.18);
-      --line-strong: rgba(255, 255, 255, 0.72);
-      --shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
-      --blur: blur(1px);
-    }
-
-    html { min-height: 100%; }
-    body {
-      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      color: var(--text);
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      background:
-        linear-gradient(135deg, rgba(1, 7, 20, 0.84) 0%, rgba(5, 24, 62, 0.70) 36%, rgba(6, 35, 90, 0.46) 100%),
-        url('{{ url_for("static", filename="bg-darts-blue.png") }}') center center / cover no-repeat fixed;
-      position: relative;
-      overflow-x: hidden;
-    }
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(circle at 18% 24%, rgba(87, 172, 255, 0.20), transparent 30%),
-        linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.34));
-      pointer-events: none;
-      z-index: 0;
-    }
-    body > * { position: relative; z-index: 1; }
-
-    .container {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 30px 16px 64px;
-    }
-    h1 {
-      font-size: clamp(2rem, 4vw, 2.7rem);
-      margin: 0 0 10px;
-      letter-spacing: 0.01em;
-      text-shadow: 0 10px 30px rgba(0,0,0,0.34);
-    }
-	.subtitle {
-	  color: #000;
-	  margin-bottom: 26px;
-	  font-size: 1.5rem;
-	  font-weight: 900;
-	  text-shadow: none;
-	}
-    .card {
-      background: var(--panel);
-      border-radius: 18px;
-      padding: 18px 20px 20px;
-      margin-bottom: 18px;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-    }
-    .card h2 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      margin-bottom: 10px;
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-      align-items: center;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.72);
-      background: rgba(255,255,255,0.07);
-      color: #fff;
-      text-decoration: none;
-      font-size: 0.95rem;
-      cursor: pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-      transition: background .18s ease, transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .btn:hover {
-      background: rgba(255,255,255,0.14);
-      border-color: rgba(255,255,255,0.92);
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(0,0,0,0.24);
-    }
-    .btn-primary {
-      background: rgba(98, 166, 255, 0.16);
-      border-color: rgba(223, 239, 255, 0.9);
-      color: white;
-    }
-    .btn-danger {
-      background: rgba(255, 92, 92, 0.10);
-      border-color: rgba(255, 213, 213, 0.86);
-      color: white;
-    }
-    .btn-small { padding: 6px 12px; font-size: 0.85rem; }
-    .btn-disabled { opacity: 0.42; pointer-events: none; filter: grayscale(0.3); }
-
-    textarea {
-      width: 100%;
-      min-height: 80px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: rgba(5, 14, 33, 0.48);
-      color: #fff;
-      padding: 10px 12px;
-      resize: vertical;
-      font-family: inherit;
-      box-sizing: border-box;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    label { font-size: 0.9rem; display: block; margin-bottom: 4px; }
-    input[type=text], input[type=password] {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: rgba(5, 14, 33, 0.48);
-      color: #fff;
-      margin-bottom: 10px;
-      font-family: inherit;
-      box-sizing: border-box;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    select {
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: rgba(5, 14, 33, 0.55);
-      color: #fff;
-      font-family: inherit;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .cam-buttons { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .slot-card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 10px 12px;
-      margin: 10px 0;
-      background: rgba(255,255,255,0.045);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .slot-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
-    .info-msg { font-size: 0.9rem; margin: 8px 0 14px; color: #ffd18b; }
-    .hint { font-size: 0.82rem; color: rgba(235,244,255,0.72); margin-top: 4px; }
-    .msg-ok { color:#c7ffd3; margin-top:10px; white-space:pre-line; }
-    .msg-bad { color:#ffd2d2; margin-top:10px; white-space:pre-line; }
-    footer {
-      margin-top: 28px;
-      font-size: 0.76rem;
-      color: rgba(235,244,255,0.64);
-      text-align: center;
-      text-shadow: 0 6px 20px rgba(0,0,0,0.28);
-    }
-    .sysinfo {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: var(--panel-strong);
-      border-radius: 16px;
-      padding: 10px 12px;
-      font-size: 0.8rem;
-      box-shadow: var(--shadow);
-      z-index: 1000;
-      border: 1px solid var(--line);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-    }
-    .quick-admin {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      width: min(220px, calc(100vw - 20px));
-      background: var(--panel-strong);
-      border-radius: 18px;
-      padding: 10px 12px;
-      font-size: 0.82rem;
-      box-shadow: var(--shadow);
-      z-index: 1000;
-      border: 1px solid var(--line);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-    }
-    .quick-admin h3 { margin:0 0 4px; font-size:0.95rem; }
-    .quick-admin .qa-status { color: var(--muted); margin-bottom:8px; }
-    .quick-admin .qa-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .quick-admin .qa-grid form { margin:0; }
-    .quick-admin .qa-grid .btn { width:100%; padding:8px 10px; font-size:0.82rem; }
-    @media (max-width: 1499px) {
-      .quick-admin { position: static; width: auto; margin: 12px 16px 0; }
-      .sysinfo { position: static; margin: 12px 16px 0; width: auto; max-width: none; }
-      .container { padding-top: 14px; }
-    }
-    .sysinfo h3 { margin:0 0 4px; font-size:0.9rem; }
-    .sysinfo-row { white-space:nowrap; }
-    code {
-      background: rgba(5, 12, 26, 0.72);
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.14);
-      color: #fff;
-    }
-    .dot { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:6px; vertical-align:middle; }
-    .dot-green { background:#86ff9b; box-shadow: 0 0 10px rgba(134,255,155,0.45); }
-    .dot-red { background:#ff8d8d; box-shadow: 0 0 10px rgba(255,141,141,0.35); }
-    .dot-gray { background:#c5ceda; }
-    details {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 12px 14px;
-      background: var(--panel);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      box-shadow: var(--shadow);
-    }
-    details summary { cursor:pointer; list-style:none; user-select:none; font-weight:600; }
-    details summary::-webkit-details-marker { display:none; }
-    .admin-hint { font-size:0.8rem; color: rgba(235,244,255,0.72); margin-top:6px; }
-
-    .ad-status {
-      display:inline-block;
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:0.9rem;
-      margin-bottom:10px;
-      font-weight:bold;
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .ad-on { border:1px solid rgba(158, 255, 184, 0.72); color:#d5ffe0; }
-    .ad-off { border:1px solid rgba(255, 185, 185, 0.72); color:#ffe0e0; }
-
-    @media (max-width: 760px) {
-      h1 { font-size: 1.85rem; }
-      .container { padding: 18px 14px 54px; }
-      .card { padding: 16px; }
-      .btn-row { gap: 8px; }
-    }
-  </style>
+  <title data-key="meta.title">Autodarts Installation</title>
+    <!-- favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon/favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon/favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}" />
+    <!-- favicon ende -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
 </head>
 <body>
 
   <div class="quick-admin">
-    <h3>Schnellzugriff</h3>
-    {% if admin_unlocked %}
-      <div class="qa-status">System + Webpanel direkt aus der Hauptansicht.</div>
+    <h3><span data-key="quick_admin.title">Schnellzugriff</span></h3>
+    {% if true %}
+      <div class="qa-status"><span data-key="quick_admin.status_enabled">System + Webpanel direkt aus der Hauptansicht.</span></div>
       <div class="qa-grid">
-        <form method="post" action="{{ url_for('admin_reboot') }}" onsubmit="return confirm('Wollen Sie wirklich den Mini PC komplett neu starten?');">
-          <button type="submit" class="btn btn-danger">Neustart</button>
+        <form method="post" action="{{ url_for('admin_reboot') }}" data-confirm-key="confirm.admin_reboot" onsubmit="return confirm('Wollen Sie wirklich den Mini PC komplett neu starten?');">
+          <button type="submit" class="btn btn-danger"><span data-key="quick_admin.reboot_btn">Neustart</span></button>
         </form>
-        <form method="post" action="{{ url_for('admin_shutdown') }}" onsubmit="return confirm('Wollen Sie den Mini PC wirklich herunterfahren?');">
-          <button type="submit" class="btn">Shutdown</button>
+        <form method="post" action="{{ url_for('admin_shutdown') }}" data-confirm-key="confirm.admin_shutdown" onsubmit="return confirm('Wollen Sie den Mini PC wirklich herunterfahren?');">
+          <button type="submit" class="btn"><span data-key="quick_admin.shutdown_btn">Shutdown</span></button>
         </form>
         <form method="post" action="{{ url_for('admin_webpanel_check') }}">
-          <button type="submit" class="btn">Webpanel prüfen</button>
+          <button type="submit" class="btn"><span data-key="quick_admin.webpanel_check_btn">Webpanel prüfen</span></button>
         </form>
-        <form method="post" action="{{ url_for('admin_webpanel_update') }}" onsubmit="return confirm('Webpanel jetzt aktualisieren?\nHinweis: Der Webpanel-Service startet danach neu.');">
-          <button type="submit" class="btn btn-primary {% if not webpanel_update_available %}btn-disabled{% endif %}" {% if not webpanel_update_available %}disabled{% endif %}>Update installieren</button>
+        <form method="post" action="{{ url_for('admin_webpanel_update') }}" data-confirm-key="confirm.webpanel_update" onsubmit="return confirm('Webpanel jetzt aktualisieren?\nHinweis: Der Webpanel-Service startet danach neu.');">
+          <button type="submit" class="btn btn-primary {% if not webpanel_update_available %}btn-disabled{% endif %}" {% if not webpanel_update_available %}disabled{% endif %}><span data-key="quick_admin.webpanel_update_btn">Update installieren</span></button>
         </form>
       </div>
       <div class="hint" style="margin-top:8px;">
-        Webpanel: <strong>{{ webpanel_version or 'unbekannt' }}</strong>
-        {% if webpanel_check.latest %}· letzter Check: <strong>{{ webpanel_check.latest }}</strong>{% endif %}
+        <span data-key="quick_admin.webpanel_label">Webpanel:</span> <strong>{{ webpanel_version or 'unbekannt' }}</strong>
+        {% if webpanel_check.latest %}<span data-key="quick_admin.last_check_label">· letzter Check:</span> <strong>{{ webpanel_check.latest }}</strong>{% endif %}
       </div>
     {% else %}
-      <div class="qa-status">Admin-Bereich unten freischalten, dann erscheinen hier Neustart-, Shutdown- und Webpanel-Buttons.</div>
+      <div class="qa-status"><span data-key="quick_admin.status_disabled">Admin-Bereich unten freischalten, dann erscheinen hier Neustart-, Shutdown- und Webpanel-Buttons.</span></div>
     {% endif %}
   </div>
 
   {% if cpu_pct is not none or mem_used is not none or temp_c is not none or autoupdate_enabled is not none %}
   <div class="sysinfo">
-    <h3>Mini PC</h3>
+    <h3><span data-key="sysinfo.title">Mini PC</span></h3>
     {% if cpu_pct is not none %}
-      <div class="sysinfo-row">CPU: {{ cpu_pct }}%</div>
+      <div class="sysinfo-row"><span data-key="sysinfo.cpu_label">CPU:</span> {{ cpu_pct }}%</div>
     {% endif %}
     {% if mem_used is not none and mem_total is not none %}
-      <div class="sysinfo-row">RAM: {{ mem_used }} / {{ mem_total }} GB</div>
+      <div class="sysinfo-row"><span data-key="sysinfo.ram_label">RAM:</span> {{ mem_used }} / {{ mem_total }} GB</div>
     {% endif %}
     {% if temp_c is not none %}
-      <div class="sysinfo-row">Temp: {{ "%.1f"|format(temp_c) }} °C</div>
+      <div class="sysinfo-row"><span data-key="sysinfo.temp_label">Temp:</span> {{ "%.1f"|format(temp_c) }} °C</div>
     {% endif %}
     <div class="sysinfo-row" style="margin-top:6px;">
-      Auto-Update:
+      <span data-key="sysinfo.autoupdate_label">Auto-Update:</span>
       {% if autoupdate_enabled is none %}
-        <span style="color:#ff6b6b; font-weight:700;">AUS</span>
-        <span class="hint" style="font-size:11px;">(Service fehlt)</span>
+        <span style="color:#ff6b6b; font-weight:700;"><span data-key="common.off">AUS</span></span>
+        <span class="hint" style="font-size:11px;">(<span data-key="sysinfo.service_missing">Service fehlt</span>)</span>
       {% elif autoupdate_enabled %}
-        <span style="color:#6be26b; font-weight:700;">AN</span>
+        <span style="color:#6be26b; font-weight:700;"><span data-key="common.on">AN</span></span>
       {% else %}
-        <span style="color:#ff6b6b; font-weight:700;">AUS</span>
+        <span style="color:#ff6b6b; font-weight:700;"><span data-key="common.off">AUS</span></span>
       {% endif %}
     </div>
     <div style="margin-top:6px; display:flex; gap:6px;">
       <form method="post" action="{{ url_for('autoupdate_set', mode='on') }}" style="flex:1; margin:0;">
         <button type="submit" class="btn btn-small" style="width:100%;" {% if autoupdate_enabled %}disabled{% endif %}>
-          Auto-Update AN
+          <span data-key="common.autoupdate_on_btn">Auto-Update AN</span>
         </button>
       </form>
       <form method="post" action="{{ url_for('autoupdate_set', mode='off') }}" style="flex:1; margin:0;">
         <button type="submit" class="btn btn-small" style="width:100%;" {% if not autoupdate_enabled %}disabled{% endif %}>
-          Auto-Update AUS
+          <span data-key="common.autoupdate_off_btn">Auto-Update AUS</span>
         </button>
       </form>
     </div>
-
   </div>
   {% endif %}
 
   <div class="container">
-    {% if autodarts_active %}
-      <div class="ad-status ad-on">Autodarts: AKTIV</div>
-    {% else %}
-      <div class="ad-status ad-off">Autodarts: DEAKTIVIERT</div>
-    {% endif %}
-    <div class="hint" style="margin:-6px 0 14px 0;">
-      Autodarts Version: <strong>{{ autodarts_version or 'unbekannt' }}</strong>
+    <div id="header">
+      {% if autodarts_active %}
+        <div class="ad-status ad-on"><span data-key="header.autodarts_active">Autodarts: AKTIV</span></div>
+      {% else %}
+        <div class="ad-status ad-off"><span data-key="header.autodarts_inactive">Autodarts: DEAKTIVIERT</span></div>
+      {% endif %}
+      <div id="lang_header">
+      <select id="lang_dropdown"></select>
+      <button type="button" class="btn btn-small" id="set_lang"><span data-key="header.set_language_btn">Sprache festlegen</span></button>
+        </div>
     </div>
 
-    
+    <div class="hint" style="margin:-6px 0 14px 0;">
+      <span data-key="header.autodarts_version_label">Autodarts Version:</span> <strong>{{ autodarts_version or 'unbekannt' }}</strong>
+    </div>
 
+    <div id="apClientInternetCard" class="ap-internet-card ap-internet-red" aria-live="polite">
+      <div class="ap-internet-main">
+        <span id="apClientInternetDot" class="dot dot-red"></span>
+        <div>
+          <div class="ap-internet-title">AP-Internet für verbundene Geräte</div>
+          <div id="apClientInternetText" class="ap-internet-text">Prüfe…</div>
+        </div>
+      </div>
+      <div id="apClientInternetHint" class="ap-internet-hint">Es wird geprüft, ob Geräte im Raspberry-AP Internet bekommen.</div>
+    </div>
 
-    <h1>Willkommen bei der Autodarts Installation</h1>
-  {% if msg %}
-    <p class="info-msg">{{ msg }}</p>
-  {% endif %}
+    <h1><span data-key="hero.welcome">Willkommen bei der Autodarts Installation</span></h1>
+    {% if msg %}
+      <p class="info-msg">{{ msg }}</p>
+    {% endif %}
     <div class="subtitle">by Peter Rottmann v.{{ webpanel_version or '1.20' }} (Multi-WLED)</div>
 
     {% if not wifi_ok and not lan_ok %}
       <div style="background:#7f1d1d; border:2px solid #f87171; color:#fee2e2;
                   padding:12px 16px; border-radius:10px; margin-bottom:18px;">
         <strong style="font-size:1.1rem;">
-          ACHTUNG: Sie sind NICHT mit dem Internet verbunden, nicht in Ihrem Wlan!
+          <span data-key="hero.offline_warning_title">ACHTUNG: Sie sind NICHT mit dem Internet verbunden, nicht in Ihrem Wlan!</span>
         </strong>
         <p style="margin:6px 0 0; font-size:0.9rem;">
-          Der <strong>Dartscheiben-Manager</strong> (Schritt 2) funktioniert nur,
-          wenn der Mini PC mit Ihrem <strong>Heim-WLAN</strong> verbunden ist.
+          <span data-key="hero.offline_warning_intro">Der</span> <strong><span data-key="hero.offline_warning_manager">Dartscheiben-Manager</span></strong> <span data-key="hero.offline_warning_rest">(Schritt 2) funktioniert nur,
+          wenn der Mini PC mit Ihrem</span> <strong><span data-key="hero.offline_warning_home_wifi">Heim-WLAN</span></strong> <span data-key="hero.offline_warning_end">verbunden ist.</span>
         </p>
       </div>
     {% endif %}
 
     <div class="btn-row" style="margin-bottom: 16px;">
       <a href="{{ url_for('help_page') }}" target="_blank" class="btn btn-small">
-        Hilfe / Handbuch öffnen (PDF)
+        <span data-key="hero.help_pdf_btn">Hilfe / Handbuch öffnen (PDF)</span>
       </a>
       <a href="{{ url_for('ap_config') }}" class="btn btn-small">
-        Access-Point (Mini PC-WLAN) auswählen
+        <span data-key="hero.ap_config_btn">Access-Point (Mini PC-WLAN) auswählen</span>
       </a>
     </div>
 
     <div class="card">
-      <h2>1. Mit WLAN zuhause verbinden</h2>
+      <h2><span data-key="wifi.title">1. Mit WLAN zuhause verbinden</span></h2>
       <p>
         {% if lan_ok %}
-          <strong>LAN Verbindung erfolgreich vorhanden.</strong>
-          Der Mini PC ist über <strong>eth0</strong> mit Ihrem Heimnetzwerk verbunden
-          (IP-Adresse: <strong>{{ lan_ip }}</strong>).
+          <strong><span data-key="wifi.lan_ok_title">LAN Verbindung erfolgreich vorhanden.</span></strong>
+          <span data-key="wifi.lan_connected_prefix">Der Mini PC ist über</span> <strong>eth0</strong> <span data-key="wifi.lan_connected_suffix">mit Ihrem Heimnetzwerk verbunden
+          (IP-Adresse:</span> <strong>{{ lan_ip }}</strong>).
         {% elif ssid and ip %}
-          Erfolgreich mit Ihrem WLAN <strong>{{ ssid }}</strong> verbunden
-          (IP-Adresse: <strong>{{ ip }}</strong>) · Signal: <strong id="wifiSignalOut">—</strong>
-          <button type="button" class="btn btn-small" id="wifiSignalBtn" onclick="fetchWifiSignal()">Signal anzeigen</button>.
+          <span data-key="wifi.wlan_connected_prefix">Erfolgreich mit Ihrem WLAN</span> <strong>{{ ssid }}</strong> <span data-key="wifi.wlan_connected_suffix">verbunden
+          (IP-Adresse:</span> <strong>{{ ip }}</strong><span data-key="wifi.signal_label">) · Signal:</span> <strong id="wifiSignalOut">—</strong>
+          <button type="button" class="btn btn-small" id="wifiSignalBtn" onclick="fetchWifiSignal()"><span data-key="wifi.signal_show_btn">Signal anzeigen</span></button>
         {% elif ssid and not ip %}
-          Mit WLAN <strong>{{ ssid }}</strong> verbunden,
-          aber es wurde keine IPv4-Adresse vergeben. Signal: <strong id="wifiSignalOut">—</strong>
-          <button type="button" class="btn btn-small" id="wifiSignalBtn" onclick="fetchWifiSignal()">Signal anzeigen</button>
+          <span data-key="wifi.wlan_connected_no_ip_prefix">Mit WLAN</span> <strong>{{ ssid }}</strong> <span data-key="wifi.wlan_connected_no_ip_suffix">verbunden,
+          aber es wurde keine IPv4-Adresse vergeben. Signal:</span> <strong id="wifiSignalOut">—</strong>
+          <button type="button" class="btn btn-small" id="wifiSignalBtn" onclick="fetchWifiSignal()"><span data-key="wifi.signal_show_btn">Signal anzeigen</span></button>
         {% else %}
-          Aktuell ist der Mini PC weder über WLAN noch über LAN mit Ihrem Heimnetzwerk verbunden.
+          <span data-key="wifi.no_network">Aktuell ist der Mini PC weder über WLAN noch über LAN mit Ihrem Heimnetzwerk verbunden.</span>
         {% endif %}
       </p>
 
       {% if not dongle_ok and not lan_ok %}
         <p class="msg-bad">
-          Der WLAN-USB-Stick wird aktuell nicht erkannt.
+          <span data-key="wifi.dongle_missing_main">Der WLAN-USB-Stick wird aktuell nicht erkannt.
           Bitte ziehen Sie den USB-Stick kurz ab und stecken Sie ihn wieder ein,
-          warten Sie ein paar Sekunden und versuchen Sie es erneut.
-          <span class="hint"><br>(Für Profis: Kein WiFi-Device <code>{{ wifi_interface }}</code> im NetworkManager sichtbar.)</span>
+          warten Sie ein paar Sekunden und versuchen Sie es erneut.</span>
+          <span class="hint"><br><span data-key="wifi.dongle_missing_hint_start">(Für Profis: Kein WiFi-Device</span> <code>{{ wifi_interface }}</code> <span data-key="wifi.dongle_missing_hint_end">im NetworkManager sichtbar.)</span></span>
         </p>
       {% endif %}
 
       <p>
-        Verbinden Sie den Mini PC zuerst mit dem WLAN in Ihrem Zuhause.
-        Falls bei Ihnen kein WLAN vorhanden ist, können Sie alternativ ein LAN-Kabel verwenden.
+        <span data-key="wifi.connect_intro">Verbinden Sie den Mini PC zuerst mit dem WLAN in Ihrem Zuhause.
+        Falls bei Ihnen kein WLAN vorhanden ist, können Sie alternativ ein LAN-Kabel verwenden.</span>
       </p>
       <div class="btn-row">
-        <a href="{{ url_for('wifi') }}" class="btn btn-primary">WLAN-Verbindung einrichten / ändern</a>
-        <a href="{{ url_for('wifi_ping_ui') }}" id="pingBtn" class="btn">Verbindungstest (30 Pakete)</a>
+        <a href="{{ url_for('wifi') }}" class="btn btn-primary"><span data-key="wifi.setup_btn">WLAN-Verbindung einrichten / ändern</span></a>
+        <button type="button" id="pingBtn" class="btn"><span data-key="wifi.ping_btn">Verbindungstest (30 Pakete)</span></button>
       </div>
-  <div class="hint" style="margin-top:6px;">{% if net_ok %}{{ ping_uplink_label }}{% else %}Verbindungstest: Kein Uplink (nur Access Point oder nicht verbunden).{% endif %}</div>
-  <div id="pingResult" class="hint" style="margin-top:10px;"></div>
+      <div class="hint" style="margin-top:6px;">{% if net_ok %}{{ ping_uplink_label }}{% else %}<span data-key="wifi.no_uplink_hint">Verbindungstest: Kein Uplink (nur Access Point oder nicht verbunden).</span>{% endif %}</div>
+      <div id="pingResult" class="hint" style="margin-top:10px;"></div>
 
-  <details style="margin-top:10px;">
-    <summary>WLAN – Erweitert</summary>
-    {% if admin_unlocked %}
-      <p class="hint" style="margin-top:8px;">
-        Achtung: Wenn Sie gerade per WLAN verbunden sind, kann „Gespeicherte WLANs löschen“ die Verbindung sofort trennen.
-      </p>
-      <p class="hint" style="margin-top:8px;">
-        Aktives WLAN-Profil: <strong>{{ wifi_conn_name or '—' }}</strong><br>
-        Autoconnect: <strong>{% if wifi_autoconnect_enabled is none %}unbekannt{% elif wifi_autoconnect_enabled %}AN{% else %}AUS{% endif %}</strong>
-      </p>
-      <div class="btn-row" style="margin-top:10px;">
-        <form method="post" action="{{ url_for('wifi_autoconnect', mode='off') }}" style="margin:0;">
-          <button type="submit" class="btn {% if wifi_autoconnect_enabled is not none and not wifi_autoconnect_enabled %}btn-primary btn-disabled{% endif %}">Autoconnect AUS</button>
-        </form>
-        <form method="post" action="{{ url_for('wifi_autoconnect', mode='on') }}" style="margin:0;">
-          <button type="submit" class="btn {% if wifi_autoconnect_enabled %}btn-primary btn-disabled{% endif %}">Autoconnect AN</button>
-        </form>
-        <form method="post" action="{{ url_for('wifi_forget_saved') }}"
-              onsubmit="return confirm('Wirklich ALLE gespeicherten WLAN-Verbindungen löschen (außer Autodarts-AP)?
-
-Wenn du gerade über WLAN verbunden bist, kann die Verbindung sofort weg sein!');"
-              style="margin:0;">
-          <button type="submit" class="btn btn-danger">Gespeicherte WLANs löschen</button>
-        </form>
-      </div>
-    {% else %}
-      <p class="admin-hint" style="margin-top:8px;">
-        Tipp: Im Admin-Bereich entsperren, um Autoconnect umzuschalten oder gespeicherte WLANs zu löschen.
-      </p>
-    {% endif %}
-  </details>
-
-</div>
+      <details style="margin-top:10px;">
+        <summary><span data-key="wifi.advanced_summary">WLAN – Erweitert</span></summary>
+        {% if admin_unlocked %}
+          <p class="hint" style="margin-top:8px;">
+            <span data-key="wifi.advanced_warning">Achtung: Wenn Sie gerade per WLAN verbunden sind, kann „Gespeicherte WLANs löschen“ die Verbindung sofort trennen.</span>
+          </p>
+          <p class="hint" style="margin-top:8px;">
+            <span data-key="wifi.active_profile_label">Aktives WLAN-Profil:</span> <strong>{{ wifi_conn_name or '—' }}</strong><br>
+            <span data-key="wifi.autoconnect_label">Autoconnect:</span> <strong>{% if wifi_autoconnect_enabled is none %}<span data-key="common.unknown">unbekannt</span>{% elif wifi_autoconnect_enabled %}<span data-key="common.on">AN</span>{% else %}<span data-key="common.off">AUS</span>{% endif %}</strong>
+          </p>
+          <div class="btn-row" style="margin-top:10px;">
+            <form method="post" action="{{ url_for('wifi_autoconnect', mode='off') }}" style="margin:0;">
+              <button type="submit" class="btn {% if wifi_autoconnect_enabled is not none and not wifi_autoconnect_enabled %}btn-primary btn-disabled{% endif %}"><span data-key="wifi.autoconnect_off_btn">Autoconnect AUS</span></button>
+            </form>
+            <form method="post" action="{{ url_for('wifi_autoconnect', mode='on') }}" style="margin:0;">
+              <button type="submit" class="btn {% if wifi_autoconnect_enabled %}btn-primary btn-disabled{% endif %}"><span data-key="wifi.autoconnect_on_btn">Autoconnect AN</span></button>
+            </form>
+            <form method="post" action="{{ url_for('wifi_forget_saved') }}"
+                  data-confirm-key="confirm.wifi_forget_saved"
+                  onsubmit="return confirm('Wirklich ALLE gespeicherten WLAN-Verbindungen löschen (außer Autodarts-AP)?\n\nWenn du gerade über WLAN verbunden bist, kann die Verbindung sofort weg sein!');"
+                  style="margin:0;">
+              <button type="submit" class="btn btn-danger"><span data-key="wifi.forget_saved_btn">Gespeicherte WLANs löschen</span></button>
+            </form>
+          </div>
+        {% else %}
+          <p class="admin-hint" style="margin-top:8px;">
+            <span data-key="wifi.admin_tip">Tipp: Im Admin-Bereich entsperren, um Autoconnect umzuschalten oder gespeicherte WLANs zu löschen.</span>
+          </p>
+        {% endif %}
+      </details>
+    </div>
 
     <div class="card">
-      <h2>2. Dartscheibe mit Autodarts-Account verknüpfen</h2>
+      <h2><span data-key="account.title">2. Dartscheibe mit Autodarts-Account verknüpfen</span></h2>
       <p>
-        Sie benötigen ein bestehendes Autodarts-Konto. Falls noch keines vorhanden ist,
-        können Sie es auf <strong>autodarts.io</strong> anlegen.
+        <span data-key="account.intro_prefix">Sie benötigen ein bestehendes Autodarts-Konto. Falls noch keines vorhanden ist,
+        können Sie es auf</span> <strong>autodarts.io</strong> <span data-key="account.intro_suffix">anlegen.</span>
       </p>
       <div class="btn-row">
-        <a href="{{ darts_url }}" target="_blank" class="btn btn-primary">Dartscheiben-Manager öffnen</a>
+        <a href="{{ darts_url }}" target="_blank" class="btn btn-primary"><span data-key="account.manager_btn">Dartscheiben-Manager öffnen</span></a>
       </div>
       <div id="ad-version"></div>
       <details style="margin-top:12px;" {% if open_adver %}open{% endif %}>
-        <summary style="cursor:pointer; font-weight:700;">Autodarts – Version &amp; Auto-Update</summary>
+        <summary style="cursor:pointer; font-weight:700;"><span data-key="account.version_summary">Autodarts – Version &amp; Auto-Update</span></summary>
         <div style="margin-top:10px;">
-      <div class="hint" style="margin-top:-6px;">
-        Wenn ein Update Probleme macht, kannst du hier schnell auf eine stabile Version wechseln oder gezielt die aktuellste installieren.
-        Auto-Update bleibt dabei standardmäßig AUS (du kannst es unten jederzeit einschalten).
-      </div>
-
-      <div style="margin-top:10px;">
-        Installiert: <strong>{{ autodarts_version or 'unbekannt' }}</strong>
-        &nbsp;•&nbsp; Stabil: <strong>{{ autodarts_stable_version or '—' }}</strong>
-        &nbsp;•&nbsp; Aktuell (online): <strong>{{ autodarts_latest_online or 'unbekannt' }}</strong>
-        &nbsp;•&nbsp; Zuletzt: <strong>{{ autodarts_last_version or '—' }}</strong>
-      </div>
-
-      {% if msg and open_adver %}
-        <p class="info-msg" style="margin-top:10px;">{{ msg }}</p>
-      {% endif %}
-
-      <div class="btn-row" style="margin-top:10px; align-items:center; gap:10px; flex-wrap:wrap;">
-        <form method="post" action="{{ url_for('autodarts_install_version') }}" style="margin:0;"
-              onsubmit="return confirm('Auf stabile Version wechseln?
-
-Hinweis: Das kann ein paar Minuten dauern und Autodarts neu starten.');">
-          <input type="hidden" name="version" value="stable">
-          <button type="submit" class="btn btn-primary" {% if not autodarts_stable_version %}disabled title="Keine stabile Version in AUTODARTS_VERSION_MENU hinterlegt."{% endif %}>Auf stabile Version wechseln</button>
-        </form>
-
-        <form method="post" action="{{ url_for('autodarts_install_version') }}" style="margin:0; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"
-              onsubmit="return confirm('Gewählte Version installieren?
-
-Hinweis: Das kann ein paar Minuten dauern und Autodarts neu starten.');">
-          <select name="version" style="min-width:220px;">
-            {% for opt in autodarts_versions_choices %}
-              <option value="{{ opt.value }}">{{ opt.label }}</option>
-            {% endfor %}
-          </select>
-          <button type="submit" class="btn">Version installieren</button>
-        </form>
-      </div>
-
-      <div class="hint" style="margin-top:8px;">
-        Tipp: Für Freunde/Familie ist „Stabil“ die sichere Wahl. „Aktuellste“ nimmt immer die neueste Online-Version{% if autodarts_latest_online %} (aktuell: {{ autodarts_latest_online }}){% endif %}.
-      </div>
-
-<hr style="border:none; border-top:1px solid #333; margin:14px 0;">
-
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
-        <div>
-          <div style="font-weight:700;">Auto-Update</div>
-          <div class="hint" style="margin-top:2px;">
-            Status:
-            {% if autoupdate_enabled is none %}
-              <span style="color:#ff6b6b; font-weight:700;">AUS</span> (Service fehlt)
-            {% elif autoupdate_enabled %}
-              <span style="color:#6be26b; font-weight:700;">AN</span>
-            {% else %}
-              <span style="color:#ff6b6b; font-weight:700;">AUS</span>
-            {% endif %}
+          <div class="hint" style="margin-top:-6px;">
+            <span data-key="account.version_hint">Wenn ein Update Probleme macht, kannst du hier schnell auf eine stabile Version wechseln oder gezielt die aktuellste installieren.
+            Auto-Update bleibt dabei standardmäßig AUS (du kannst es unten jederzeit einschalten).</span>
           </div>
-        </div>
 
-        <div class="btn-row" style="margin:0;">
-          <form method="post" action="{{ url_for('autoupdate_set', mode='on') }}" style="margin:0;">
-            <button type="submit" class="btn btn-small" {% if autoupdate_enabled %}disabled{% endif %}
-                    onclick="return confirm('Auto-Update aktivieren?
+          <div style="margin-top:10px;">
+            <span data-key="common.installed_label">Installiert:</span> <strong>{{ autodarts_version or 'unbekannt' }}</strong>
+            &nbsp;•&nbsp; <span data-key="account.stable_label">Stabil:</span> <strong>{{ autodarts_stable_version or '—' }}</strong>
+            &nbsp;•&nbsp; <span data-key="account.online_label">Aktuell (online):</span> <strong>{{ autodarts_latest_online or 'unbekannt' }}</strong>
+            &nbsp;•&nbsp; <span data-key="account.last_label">Zuletzt:</span> <strong>{{ autodarts_last_version or '—' }}</strong>
+          </div>
 
-Hinweis: Dadurch können Updates wieder automatisch installiert werden.');">
-              Auto-Update AN
-            </button>
-          </form>
-          <form method="post" action="{{ url_for('autoupdate_set', mode='off') }}" style="margin:0;">
-            <button type="submit" class="btn btn-small" {% if not autoupdate_enabled %}disabled{% endif %}>
-              Auto-Update AUS
-            </button>
-          </form>
-        </div>
-      </div>
-    
+          {% if msg and open_adver %}
+            <p class="info-msg" style="margin-top:10px;">{{ msg }}</p>
+          {% endif %}
+
+          <div class="btn-row" style="margin-top:10px; align-items:center; gap:10px; flex-wrap:wrap;">
+            <form method="post" action="{{ url_for('autodarts_install_version') }}" style="margin:0;"
+                  data-confirm-key="confirm.autodarts_switch_stable"
+                  onsubmit="return confirm('Auf stabile Version wechseln?\n\nHinweis: Das kann ein paar Minuten dauern und Autodarts neu starten.');">
+              <input type="hidden" name="version" value="stable">
+              <button type="submit" class="btn btn-primary" {% if not autodarts_stable_version %}disabled title="Keine stabile Version in AUTODARTS_VERSION_MENU hinterlegt." data-title-key="account.stable_version_missing_title"{% endif %}><span data-key="account.switch_stable_btn">Auf stabile Version wechseln</span></button>
+            </form>
+
+            <form method="post" action="{{ url_for('autodarts_install_version') }}" style="margin:0; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"
+                  data-confirm-key="confirm.autodarts_install_selected"
+                  onsubmit="return confirm('Gewählte Version installieren?\n\nHinweis: Das kann ein paar Minuten dauern und Autodarts neu starten.');">
+              <select name="version" style="min-width:220px;">
+                {% for opt in autodarts_versions_choices %}
+                  <option value="{{ opt.value }}">{{ opt.label }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn"><span data-key="account.install_version_btn">Version installieren</span></button>
+            </form>
+          </div>
+
+          <div class="hint" style="margin-top:8px;">
+            Tipp: Für Freunde/Familie ist „Stabil“ die sichere Wahl. „Aktuellste“ nimmt immer die neueste Online-Version{% if autodarts_latest_online %} (aktuell: {{ autodarts_latest_online }}){% endif %}.
+          </div>
+
+          <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-weight:700;"><span data-key="common.autoupdate_title">Auto-Update</span></div>
+              <div class="hint" style="margin-top:2px;">
+                <span data-key="common.status_label">Status:</span>
+                {% if autoupdate_enabled is none %}
+                  <span style="color:#ff6b6b; font-weight:700;"><span data-key="common.off">AUS</span></span> (<span data-key="sysinfo.service_missing">Service fehlt</span>)
+                {% elif autoupdate_enabled %}
+                  <span style="color:#6be26b; font-weight:700;"><span data-key="common.on">AN</span></span>
+                {% else %}
+                  <span style="color:#ff6b6b; font-weight:700;"><span data-key="common.off">AUS</span></span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="btn-row" style="margin:0;">
+              <form method="post" action="{{ url_for('autoupdate_set', mode='on') }}" style="margin:0;">
+                <button type="submit" class="btn btn-small" {% if autoupdate_enabled %}disabled{% endif %}
+                        data-confirm-key="confirm.autoupdate_enable"
+                        onclick="return confirm('Auto-Update aktivieren?\n\nHinweis: Dadurch können Updates wieder automatisch installiert werden.');">
+                  <span data-key="common.autoupdate_on_btn">Auto-Update AN</span>
+                </button>
+              </form>
+              <form method="post" action="{{ url_for('autoupdate_set', mode='off') }}" style="margin:0;">
+                <button type="submit" class="btn btn-small" {% if not autoupdate_enabled %}disabled{% endif %}>
+                  <span data-key="common.autoupdate_off_btn">Auto-Update AUS</span>
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </details>
     </div>
 
-<div class="card">
-  <h2>3. Kamera einstellen</h2>
-
-  {% if autodarts_notice %}
-    <p class="info-msg">
-      Autodarts wurde wieder gestartet.
-      Wenn Sie fertig sind, prüfen Sie bitte kurz im Dartscheiben-Manager (Schritt&nbsp;2),
-      ob die Kamera-Streams dort wieder korrekt laufen.
-    </p>
-  {% endif %}
-
-  <p>
-    Hier können Sie die Kameras einstellen (Bild ausrichten, scharf stellen).
-    Dafür wird Autodarts kurz pausiert und ein Live-Bild angezeigt.
-  </p>
-
-  <div class="btn-row">
-    {% if not camera_mode %}
-      <form method="post" action="{{ url_for('camera_mode_start') }}"
-            onsubmit="return confirm('Während der Kamera-Einstellung wird Autodarts kurz pausiert. Fortfahren?');">
-        <button type="submit" class="btn btn-primary">Kamera einstellen starten</button>
-      </form>
-    {% else %}
-      <form method="post" action="{{ url_for('camera_mode_end') }}">
-        <button type="submit" class="btn btn-danger">Autodarts wieder starten</button>
-      </form>
-    {% endif %}
-  </div>
-
-  <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
-
-  <details style="margin-top:10px;" {% if camera_mode %}open{% endif %}>
-    <summary>{% if camera_mode %}Kamera-Auswahl & Live-Bilder{% else %}Kamera-Auswahl anzeigen{% endif %}</summary>
-
-    {% if camera_mode %}
-      <form method="post" action="{{ url_for('set_cams') }}" style="margin-top:12px;">
-        <div class="btn-row">
-          <button type="submit" class="btn btn-small btn-primary">Kameras suchen</button>
-        </div>
-      </form>
-      <p class="hint" style="margin-top:8px;">
-        Es werden bis zu {{ max_cams }} physische Kameras erkannt. Die Auswahl merkt sich eine echte Kamera – nicht nur ein altes <code>/dev/videoX</code>.
-      </p>
-
-      {% if cam_count_found > 0 %}
-        <p style="margin-top:12px;">Gefundene Kameras: {{ cam_count_found }}</p>
-
-        {% for slot in cam_slots %}
-          <div class="slot-card">
-            <div class="slot-row">
-              <div>
-                <strong>kamera_{{ slot.slot }}</strong><br>
-                <span class="hint">Zuordnung: {{ slot.label or '—' }}</span><br>
-                <span class="hint">Aktuelles Device: {% if slot.device %}<code>{{ slot.device }}</code>{% else %}nicht verfügbar{% endif %}</span>
-              </div>
-
-              <div class="btn-row" style="margin:0;">
-                <form method="post" action="{{ url_for('set_cam_slot', slot_id=slot.slot) }}" style="margin:0; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                  <select name="camera_id">
-                    {% for cam in cam_inventory %}
-                      <option value="{{ cam.id }}" {% if cam.id == slot.camera_id %}selected{% endif %}>{{ cam.label }}</option>
-                    {% endfor %}
-                  </select>
-                  <button type="submit" class="btn btn-small">Zuordnen</button>
-                </form>
-
-                <a href="{{ url_for('cam_view', cam_id=slot.slot) }}" target="_blank" class="btn btn-small btn-primary">
-                  kamera_{{ slot.slot }} öffnen
-                </a>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <p style="margin-top:12px;">Es wurden noch keine Kameras gesucht.</p>
-      {% endif %}
-
-      {% if cam_info_message %}
-        <p class="info-msg">{{ cam_info_message }}</p>
-      {% endif %}
-    {% else %}
-      <p class="hint" style="margin-top:10px;">
-        Mit <strong>Kamera einstellen starten</strong> wird Autodarts pausiert und erst dann die Kamera-Auswahl eingeblendet.
-      </p>
-    {% endif %}
-  </details>
-</div>
-
-<!-- LED Konfiguration -->
     <div class="card">
-      <h2>LED Konfiguration</h2>
+      <h2><span data-key="camera.title">3. Kamera einstellen</span></h2>
+
+      {% if autodarts_notice %}
+        <p class="info-msg">
+          <span data-key="camera.restart_notice">Autodarts wurde wieder gestartet.
+          Wenn Sie fertig sind, prüfen Sie bitte kurz im Dartscheiben-Manager (Schritt&nbsp;2),
+          ob die Kamera-Streams dort wieder korrekt laufen.</span>
+        </p>
+      {% endif %}
+
+      <p>
+        <span data-key="camera.intro">Hier können Sie die Kameras einstellen (Bild ausrichten, scharf stellen).
+        Dafür wird Autodarts kurz pausiert und ein Live-Bild angezeigt.</span>
+      </p>
+
+      <div class="btn-row">
+        {% if not camera_mode %}
+          <form method="post" action="{{ url_for('camera_mode_start') }}"
+                data-confirm-key="confirm.camera_mode_start"
+                onsubmit="return confirm('Während der Kamera-Einstellung wird Autodarts kurz pausiert. Fortfahren?');">
+            <button type="submit" class="btn btn-primary"><span data-key="camera.start_btn">Kamera einstellen starten</span></button>
+          </form>
+        {% else %}
+          <form method="post" action="{{ url_for('camera_mode_end') }}">
+            <button type="submit" class="btn btn-danger"><span data-key="camera.end_btn">Autodarts wieder starten</span></button>
+          </form>
+        {% endif %}
+      </div>
+
+      <div class="btn-row" style="margin-top:10px;">
+        <a href="{{ url_for('siemens_star_pdf') }}" target="_blank" class="btn btn-small btn-secondary">
+          <span data-key="camera.focus_target_pdf_btn">Fokusziel (PDF) öffnen</span>
+        </a>
+        <a href="{{ url_for('siemens_star_pdf', download=1) }}" class="btn btn-small btn-secondary" download>
+          <span data-key="camera.focus_target_pdf_download_btn">PDF herunterladen</span>
+        </a>
+      </div>
+
+      <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
+
+      <details style="margin-top:10px;" {% if camera_mode %}open{% endif %}>
+        <summary>{% if camera_mode %}<span data-key="camera.live_summary">Kamera-Auswahl & Live-Bilder</span>{% else %}<span data-key="camera.show_selection_summary">Kamera-Auswahl anzeigen</span>{% endif %}</summary>
+
+        {% if camera_mode %}
+          <form method="post" action="{{ url_for('set_cams') }}" style="margin-top:12px;">
+            <div class="btn-row">
+              <button type="submit" class="btn btn-small btn-primary"><span data-key="camera.search_btn">Kameras suchen</span></button>
+            </div>
+          </form>
+          <p class="hint" style="margin-top:8px;">
+            <span data-key="camera.search_hint_start">Es werden bis zu</span> {{ max_cams }} <span data-key="camera.search_hint_end">physische Kameras erkannt. Die Auswahl merkt sich eine echte Kamera – nicht nur ein altes</span> <code>/dev/videoX</code>. 
+          </p>
+
+          {% if cam_count_found > 0 %}
+            <p style="margin-top:12px;"><span data-key="camera.found_count_label">Gefundene Kameras:</span> {{ cam_count_found }}</p>
+
+            {% for slot in cam_slots %}
+              <div class="slot-card">
+                <div class="slot-row">
+                  <div>
+                    <strong>kamera_{{ slot.slot }}</strong><br>
+                    <span class="hint"><span data-key="camera.assignment_label">Zuordnung:</span> {{ slot.label or '—' }}</span><br>
+                    <span class="hint"><span data-key="camera.device_label">Aktuelles Device:</span> {% if slot.device %}<code>{{ slot.device }}</code>{% else %}<span data-key="common.not_available">nicht verfügbar</span>{% endif %}</span>
+                  </div>
+
+                  <div class="btn-row" style="margin:0;">
+                    <form method="post" action="{{ url_for('set_cam_slot', slot_id=slot.slot) }}" style="margin:0; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                      <select name="camera_id">
+                        {% for cam in cam_inventory %}
+                          <option value="{{ cam.id }}" {% if cam.id == slot.camera_id %}selected{% endif %}>{{ cam.label }}</option>
+                        {% endfor %}
+                      </select>
+                      <button type="submit" class="btn btn-small"><span data-key="camera.assign_btn">Zuordnen</span></button>
+                    </form>
+
+                    <a href="{{ url_for('cam_view', cam_id=slot.slot) }}" target="_blank" class="btn btn-small btn-primary">
+                      kamera_{{ slot.slot }} öffnen
+                    </a>
+                    <a href="{{ url_for('cam_focus', cam_id=slot.slot) }}" target="_blank" class="btn btn-small btn-precision-focus">
+                      <span data-key="camera.precision_focus_btn">Präzisions-Fokus</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p style="margin-top:12px;"><span data-key="camera.none_found">Es wurden noch keine Kameras gesucht.</span></p>
+          {% endif %}
+
+          {% if cam_info_message %}
+            <p class="info-msg">{{ cam_info_message }}</p>
+          {% endif %}
+        {% else %}
+          <p class="hint" style="margin-top:10px;">
+            Mit <strong><span data-key="camera.start_btn">Kamera einstellen starten</span></strong> wird Autodarts pausiert und erst dann die Kamera-Auswahl eingeblendet.
+          </p>
+        {% endif %}
+      </details>
+    </div>
+
+    <div class="card">
+      <h2><span data-key="led.title">4. LED Konfiguration</span></h2>
 
       <p class="hint" style="margin-top:0;">
-        Achtung: Autodarts-Account darf <strong>keine 2-Faktor-Authentifizierung (2FA)</strong> aktiviert haben.
+        <span data-key="led.twofa_warning_start">Achtung: Autodarts-Account darf</span> <strong><span data-key="led.twofa_warning_middle">keine 2-Faktor-Authentifizierung (2FA)</span></strong> <span data-key="led.twofa_warning_end">aktiviert haben.</span>
       </p>
 
       {% if ledmsg %}
@@ -645,238 +424,245 @@ Hinweis: Dadurch können Updates wieder automatisch installiert werden.');">
       {% endif %}
 
       <p class="hint">
-        Datei: <code>/var/lib/autodarts/extensions/darts-caller/start-custom.sh</code>
+        <span data-key="led.file_label">Datei:</span> <code>/var/lib/autodarts/extensions/darts-caller/start-custom.sh</code>
       </p>
 
-      <!-- Darts-Caller Credentials -->
       <form method="post" action="{{ url_for('led_save') }}">
-        <label for="ad_email">Autodarts-Account</label>
+        <label for="ad_email"><span data-key="led.account_label">Autodarts-Account</span></label>
         <input type="text" id="ad_email" name="ad_email" value="{{ caller_email }}">
 
-        <label for="ad_password">Autodarts-Passwort</label>
-        <input type="password" id="ad_password" name="ad_password" value="" placeholder="(leer lassen = unverändert)">
+        <label for="ad_password"><span data-key="led.password_label">Autodarts-Passwort</span></label>
+        <input type="password" id="ad_password" name="ad_password" value="" placeholder="(leer lassen = unverändert)" data-placeholder-key="led.password_placeholder">
 
-        <label for="ad_board">Autodarts-Boardnummer / Board-ID</label>
+        <label for="ad_board"><span data-key="led.board_label">Autodarts-Boardnummer / Board-ID</span></label>
         <input type="text" id="ad_board" name="ad_board" value="{{ caller_board_id }}">
 
         <div class="btn-row">
           <button type="submit" class="btn btn-primary {% if not can_save_creds %}btn-disabled{% endif %}">
-            Speichern
+            <span data-key="common.save_btn">Speichern</span>
           </button>
         </div>
       </form>
 
       {% if not caller_exists %}
         <p class="info-msg">
-          darts-caller start-custom.sh nicht gefunden. LED Konfiguration ist deaktiviert.
+          <span data-key="led.caller_missing">darts-caller start-custom.sh nicht gefunden. LED Konfiguration ist deaktiviert.</span>
         </p>
       {% endif %}
 
-      
-      <!-- LED-Bänder (WLED) -->
-<h3 style="margin:0 0 6px; font-size:1.05rem;">LED Bänder (bis zu 3)</h3>
-<p class="hint" style="margin-top:0;">Hier können Sie die LEDs verwalten, bzw. ein und ausschalten.</p>
+      <h3 style="margin:0 0 6px; font-size:1.05rem;"><span data-key="led.bands_title">LED Bänder (bis zu 3)</span></h3>
+      <p class="hint" style="margin-top:0;"><span data-key="led.bands_hint">Hier können Sie die LEDs verwalten, bzw. ein und ausschalten.</span></p>
 
-<div style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 16px;">
-  <a href="{{ url_for('wled_presets') }}"
-     id="openPresetsBtn"
-     class="btn btn-primary {% if not wled_installed %}btn-disabled{% endif %}"
-     {% if not wled_installed %}aria-disabled="true" onclick="return false;"{% endif %}>
-    PRESETS Einstellung
-  </a>
-</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 16px;">
+        <a href="{{ url_for('wled_presets') }}"
+           id="openPresetsBtn"
+           class="btn btn-primary {% if not wled_installed %}btn-disabled{% endif %}"
+           {% if not wled_installed %}aria-disabled="true" onclick="return false;"{% endif %}>
+          <span data-key="led.presets_btn">PRESETS Einstellung</span>
+        </a>
+      </div>
 
-{% if not wled_installed %}
-  <p class="info-msg">Die LED-Steuerung ist auf diesem Mini PC nicht installiert.</p>
-{% endif %}
+      {% if not wled_installed %}
+        <p class="info-msg"><span data-key="led.not_installed">Die LED-Steuerung ist auf diesem Mini PC nicht installiert.</span></p>
+      {% endif %}
 
-{% if not wled_master_enabled %}
-  <p class="msg-bad">WLED ist global deaktiviert (Master-Schalter AUS). Bitte im Admin-Bereich wieder aktivieren.</p>
-{% endif %}
+      {% if not wled_master_enabled %}
+        <p class="msg-bad"><span data-key="led.master_disabled">WLED ist global deaktiviert (Master-Schalter AUS). Bitte im Admin-Bereich wieder aktivieren.</span></p>
+      {% endif %}
 
-<form id="wledForm">
-<fieldset {% if not wled_master_enabled %}disabled style="opacity:0.55"{% endif %}>
-  {% for b in wled_bands %}
-    <div style="border:1px solid #333; border-radius:12px; padding:12px 14px; margin:10px 0;">
-      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
-        <div style="font-weight:700;">LED Band {{ b.slot }}</div>
+      <form id="wledForm">
+        <fieldset {% if not wled_master_enabled %}disabled style="opacity:0.55"{% endif %}>
+          {% for b in wled_bands %}
+            <div style="border:1px solid #333; border-radius:12px; padding:12px 14px; margin:10px 0;">
+              <input type="hidden" id="wled_host_{{ b.slot }}" value="{% if b.slot == 1 %}{{ wled_hosts[0] }}{% elif b.slot == 2 %}{{ wled_hosts[1] }}{% elif b.slot == 3 %}{{ wled_hosts[2] }}{% endif %}">
+              <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+                <div style="font-weight:700;"><span data-key="led.band_label">LED Band</span> {{ b.slot }}</div>
 
-        <div style="display:flex; align-items:center; gap:12px;">
-          <label style="display:flex; align-items:center; gap:8px; margin:0;">
-            <input type="checkbox" name="wled_enabled_{{ b.slot }}" value="1"
-                   {% if b.enabled %}checked{% endif %}
-                   {% if not wled_installed %}disabled{% endif %}>
-            <span>Ein / Aus</span>
-          </label>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <label style="display:flex; align-items:center; gap:8px; margin:0;">
+                    <input type="checkbox" name="wled_enabled_{{ b.slot }}" value="1"
+                           {% if b.enabled %}checked{% endif %}
+                           {% if not wled_installed %}disabled{% endif %}>
+                    <span data-key="led.toggle_label">Ein / Aus</span>
+                  </label>
 
-          <span id="wled_status_{{ b.slot }}" style="font-size:0.9rem;">
-            {% if not b.enabled %}
-              <span class="dot dot-gray"></span>Aus
-            {% else %}
-              <span class="dot dot-gray"></span>Prüfe…
-            {% endif %}
-          </span>
+                  <span id="wled_status_{{ b.slot }}" style="font-size:0.9rem;">
+                    {% if not b.enabled %}
+                      <span class="dot dot-gray"></span><span data-key="common.off">Aus</span>
+                    {% else %}
+                      <span class="dot dot-gray"></span><span data-key="led.checking">Prüfe…</span>
+                    {% endif %}
+                  </span>
 
-          <a href="{{ url_for('wled_open_slot', slot=b.slot) }}" target="_blank"
-             id="wled_cfgbtn_{{ b.slot }}" class="btn btn-small {% if not wled_installed or not b.enabled %}btn-disabled{% endif %}">
-            LED konfigurieren
-          </a>
-        </div>
+                  <a href="{{ url_for('wled_open_slot', slot=b.slot) }}" target="_blank"
+                     id="wled_cfgbtn_{{ b.slot }}"
+                     class="btn btn-small {% if not wled_installed or not b.enabled %}btn-disabled{% endif %}"
+                     {% if not wled_installed or not b.enabled %}aria-disabled="true"{% endif %}>
+                    <span data-key="led.configure_btn">LED konfigurieren</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </fieldset>
+      </form>
+    </div>
+
+
+<div class="card" id="autodartsThemesCard">
+  <h2><span data-key="themes.title">5. Autodarts Themen</span></h2>
+  <p class="hint"><strong><span data-key="themes.browser_support_label">Wichtig:</span></strong> <span data-key="themes.browser_support_text">Diese Theme-Funktion ist nur mit Google Chrome und Chromium verwendbar.</span></p>
+
+  {% if autodarts_display_info.show_in_theme_card %}
+  <div id="autodartsDisplayBox" style="margin:14px 0 16px; padding:14px; border:1px solid #333; border-radius:12px; background:rgba(255,255,255,0.02);">
+    <div style="font-weight:700; margin-bottom:6px;"><span data-key="themes.display_section_title">Bildschirm-Auflösung am Raspberry</span></div>
+    <p class="hint" style="margin-top:0;"><span data-key="themes.display_section_hint">Nur für den direkt am Raspberry angeschlossenen Monitor oder Fernseher. Die Änderung wirkt live und kann nach einem Neustart verloren gehen.</span></p>
+
+    <div id="autodartsDisplayUnavailableWrap" {% if autodarts_display_info.available %}style="display:none;"{% endif %}>
+      <p class="hint" id="autodartsDisplayUnavailable">{{ autodarts_display_info.message or t('themes.display_no_monitor', 'Es wurde kein aktiver Monitor am Raspberry erkannt.') }}</p>
+    </div>
+
+    <div id="autodartsDisplayControlsWrap" {% if not autodarts_display_info.available %}style="display:none;"{% endif %}>
+      <label for="autodartsDisplayOutputSelect"><span data-key="themes.display_output_label">Bildschirm-Ausgang</span></label>
+      <select id="autodartsDisplayOutputSelect" style="width:100%; margin-bottom:10px;"></select>
+
+      <label for="autodartsDisplayModeSelect"><span data-key="themes.display_mode_label">Verfügbare Auflösungen</span></label>
+      <select id="autodartsDisplayModeSelect" style="width:100%; margin-bottom:10px;"></select>
+
+      <div class="hint" id="autodartsDisplayCurrentMode" style="margin-top:0;"></div>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button type="button" class="btn btn-primary" id="autodartsDisplayApplyBtn"><span data-key="themes.display_apply_btn">Auflösung übernehmen</span></button>
+        <button type="button" class="btn" id="autodartsDisplayRefreshBtn"><span data-key="themes.display_refresh_btn">Liste neu laden</span></button>
       </div>
     </div>
-  {% endfor %}
 
-  </fieldset>
-</form>
+    <p class="hint" id="autodartsDisplayStatus" style="margin-top:10px;"></p>
+  </div>
+  {% endif %}
 
-<script>
-  // Wenn #admin_details oder ?adminerr / ?admin gesetzt ist: Admin-Details automatisch aufklappen
-  (function () {
-    try {
-      var p = new URLSearchParams(window.location.search);
-      if (window.location.hash === "#admin_details" || p.get("admin") === "1" || p.get("adminerr") === "1") {
-        var d = document.getElementById("admin_details");
-        if (d) d.open = true;
-      }
-    } catch (e) {}
-  })();
-</script>
+  <label for="autodartsThemeSelect"><span data-key="themes.select_label">Theme auswählen</span></label>
+  <select id="autodartsThemeSelect" style="width:100%; margin-bottom:10px;">
+    <option value="default" data-author="" data-modes="" data-resolution="" data-preview-url="" {% if autodarts_theme_selected == 'default' %}selected{% endif %}>{{ t('themes.default_option', 'Default (aus)') }}</option>
+    {% for theme in autodarts_themes %}
+      <option value="{{ theme.filename }}"
+              data-author="{{ theme.author }}"
+              data-modes="{{ theme.modes }}"
+              data-resolution="{{ theme.resolution }}"
+              data-preview-url="{{ url_for('api_autodarts_theme_preview', filename=theme.preview_filename) if theme.has_preview else '' }}"
+              {% if autodarts_theme_selected == theme.filename %}selected{% endif %}>{{ theme.name }}</option>
+    {% endfor %}
+  </select>
 
-<script>
-  
-  // WLAN-Signalstärke nur auf Knopfdruck abfragen (spart nmcli-Rescan beim Laden)
-  async function fetchWifiSignal(){
-    const out = document.getElementById("wifiSignalOut");
-    const btn = document.getElementById("wifiSignalBtn");
-    if(btn){ btn.classList.add("btn-disabled"); btn.disabled = true; }
-    try{
-      const r = await fetch("{{ url_for('api_wifi_signal') }}", { cache: "no-store" });
-      const j = await r.json();
-      if(j && j.iface_label && titleEl) titleEl.textContent = j.iface_label;
-      if(out){
-        out.textContent = (j && j.signal !== null && j.signal !== undefined) ? (String(j.signal) + "%") : "n/a";
-      }
-    }catch(e){
-      if(out) out.textContent = "n/a";
-    }finally{
-      if(btn){ btn.classList.remove("btn-disabled"); btn.disabled = false; }
-    }
-  }
+  {% set current_theme = (autodarts_themes | selectattr('filename', 'equalto', autodarts_theme_selected) | list | first) %}
+  <div style="margin-top:0; display:grid; grid-template-columns:auto 1fr; gap:6px 10px; align-items:start;">
+    <div class="hint"><span data-key="themes.current_author_label">Autor:</span></div>
+    <div class="hint"><strong id="autodartsThemeAuthor">{{ current_theme.author if current_theme and current_theme.author else t('themes.author_unknown', 'unbekannt') }}</strong></div>
 
-(function () {
-    const statusUrl = "{{ url_for('api_wled_status') }}";
+    <div class="hint"><span data-key="themes.current_modes_label">Spielmodi:</span></div>
+    <div class="hint"><strong id="autodartsThemeModes">{{ current_theme.modes if current_theme and current_theme.modes else t('themes.meta_unknown', 'nicht angegeben') }}</strong></div>
 
-    function setStatus(slot, state) {
-      const el = document.getElementById("wled_status_" + slot);
-      if (!el) return;
+    <div class="hint"><span data-key="themes.current_resolution_label">Auflösung:</span></div>
+    <div class="hint"><strong id="autodartsThemeResolution">{{ current_theme.resolution if current_theme and current_theme.resolution else t('themes.meta_unknown', 'nicht angegeben') }}</strong></div>
+  </div>
 
-      if (state === "off") {
-        el.innerHTML = '<span class="dot dot-gray"></span>Aus';
-        return;
-      }
-      if (state === "checking") {
-        el.innerHTML = '<span class="dot dot-gray"></span>Prüfe…';
-        return;
-      }
-      if (state === "ok") {
-        el.innerHTML = '<span class="dot dot-green"></span>Erreichbar';
-        return;
-      }
-      if (state === "bad") {
-        el.innerHTML = '<span class="dot dot-red"></span>Nicht erreichbar';
-        return;
-      }
-      el.innerHTML = '<span class="dot dot-gray"></span>—';
-    }
+  <div id="autodartsThemePreviewWrap" style="margin-top:10px; {% if not current_theme or not current_theme.has_preview %}display:none;{% endif %}">
+    <div class="hint" style="margin-bottom:6px;"><span data-key="themes.preview_label">Vorschau:</span></div>
+    <img id="autodartsThemePreviewImg"
+         src="{{ url_for('api_autodarts_theme_preview', filename=current_theme.preview_filename) if current_theme and current_theme.has_preview else '' }}"
+         alt="Theme Vorschau"
+         style="display:block; width:100%; max-width:360px; border-radius:12px; border:1px solid #3a3a3a; box-shadow:0 10px 25px rgba(0,0,0,.25); cursor:{% if current_theme and current_theme.has_preview %}zoom-in{% else %}default{% endif %};">
+    <div class="hint" id="autodartsThemePreviewHint" style="margin-top:6px;"><span data-key="themes.preview_hint">Dateiname wie das Theme, z. B. theme.css und theme.png.</span></div>
+  </div>
+  <p class="hint" id="autodartsThemeNoPreview" style="margin-top:10px; {% if current_theme and current_theme.has_preview %}display:none;{% endif %}"><span data-key="themes.no_preview">Für dieses Theme wurde kein Vorschaubild gefunden.</span></p>
 
-    function storeReachableTargets(data) {
-      const reachable = [];
-      (data.bands || []).forEach(b => {
-        if (!b.enabled || b.online !== true) return;
-        const slot = Number(b.slot || 0);
-        const hostInput = document.getElementById("wled_host_" + slot);
-        const host = hostInput ? String(hostInput.value || "").trim() : "";
-        if (!host) return;
-        reachable.push({
-          slot: slot,
-          host: host,
-          label: "LED Band " + slot + " – " + host
-        });
-      });
-      localStorage.setItem("reachableWledTargets", JSON.stringify(reachable));
-    }
+  {% if not autodarts_themes %}
+    <p class="info-msg"><span data-key="themes.no_themes">Im Theme-Ordner wurden noch keine .css-Dateien gefunden.</span></p>
+  {% endif %}
 
-    function refresh() {
-      fetch(statusUrl, { cache: "no-store" })
-        .then(r => r.json())
-        .then(data => {
-          (data.bands || []).forEach(b => {
-            if (!b.enabled) return setStatus(b.slot, "off");
-            if (b.online === true) return setStatus(b.slot, "ok");
-            if (b.online === false) return setStatus(b.slot, "bad");
-            setStatus(b.slot, "checking");
-          });
-          storeReachableTargets(data);
-        })
-        .catch(() => {});
-    }
+  <div class="btn-row" style="margin-top:12px;">
+    <button type="button" class="btn btn-primary" id="autodartsThemeApplyBtn"><span data-key="themes.apply_btn">Theme aktivieren</span></button>
+    <button type="button" class="btn" id="autodartsThemeInfoBtn"><span data-key="themes.info_btn">Info</span></button>
+  </div>
 
-    window.addEventListener("load", refresh);
+  <div class="btn-row" style="margin-top:8px;">
+    {% if autodarts_theme_store_url %}
+      <a href="{{ autodarts_theme_store_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-small"><span data-key="themes.install_extension_btn">Themen Extension installieren</span></a>
+    {% else %}
+      <button type="button" class="btn btn-small btn-disabled" id="autodartsThemeStoreInfoBtn"><span data-key="themes.install_extension_btn">Themen Extension installieren</span></button>
+    {% endif %}
+  </div>
+  <p class="hint"><span data-key="themes.install_hint">Die Erweiterung lädt das aktive Theme automatisch vom Webpanel und wirkt auf https://play.autodarts.io/.</span></p>
+  <p class="hint" {% if autodarts_theme_store_url %}style="display:none;"{% endif %} id="autodartsThemeStoreHint"><span data-key="themes.store_missing_hint">Der Chrome-Web-Store-Link ist noch nicht hinterlegt.</span></p>
+  <p class="hint" id="autodartsThemeStatus"></p>
+</div>
 
-    const presetsBtn = document.getElementById("openPresetsBtn");
-    if (presetsBtn) {
-      presetsBtn.addEventListener("click", async () => {
-        try {
-          const r = await fetch(statusUrl, { cache: "no-store" });
-          const data = await r.json();
-          storeReachableTargets(data);
-        } catch (e) {}
-      });
-    }
+<div class="card" id="autodartsToolsCard">
+  <h2><span data-key="tools.title">6. Tools for Autodarts</span></h2>
+  <p class="hint" style="margin-top:0;"><span data-key="tools.description">Dies ist eine Erweiterung für Autodarts für Animationen, Ansagen und mehr.</span></p>
+  <p class="hint"><strong><span data-key="tools.activation_label">Wichtig:</span></strong> <span data-key="tools.activation_text">Die Erweiterung muss auf dem Gerät aktiviert werden, auf dem gespielt wird.</span></p>
+  <p class="hint"><span data-key="tools.platform_intro">Je nach Gerät führt ein anderer Installationsweg zum Ziel. Wähle einfach den passenden Button – der empfohlene Weg für dieses Gerät wird unten markiert.</span></p>
 
-    document.querySelectorAll("input[type=checkbox][name^=wled_enabled_]").forEach(cb => {
-      cb.addEventListener("change", async () => {
-        const slot = (cb.name || "").split("_").pop();
-        if (!slot) return;
+  <div id="autodartsToolsPlatformHint" class="hint" style="margin-top:10px; padding:10px 12px; border:1px solid #333; border-radius:12px; background:rgba(255,255,255,0.02); display:none;"></div>
 
-        // UI sofort reagieren
-        setStatus(slot, cb.checked ? "checking" : "off");
-        const cfgBtn = document.getElementById("wled_cfgbtn_" + slot);
-        if(cfgBtn){
-          if(cb.checked){ cfgBtn.classList.remove("btn-disabled"); }
-          else { cfgBtn.classList.add("btn-disabled"); }
-        }
+  <div class="btn-row" style="margin-top:12px; gap:10px; flex-wrap:wrap;">
+    <a id="autodartsToolsBtnChrome"
+       href="https://chromewebstore.google.com/detail/tools-for-autodarts/oolfddhehmbpdnlmoljmllcdggmkgihh?utm_source=ext_app_menu"
+       target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+      <span data-key="tools.activate_chrome_btn">Chrome / Edge / Brave</span>
+    </a>
 
-        // sofort speichern (ohne extra "Speichern"-Knopf)
-        cb.disabled = true;
-        try{
-          const body = new URLSearchParams();
-          body.set("enabled", cb.checked ? "1" : "0");
-          const r = await fetch(`/wled/set-enabled/${slot}`, { method:"POST", body });
-          const j = await r.json().catch(()=>({ok:false,msg:""}));
-          if(!j.ok){
-            // rollback UI falls Fehler
-            cb.checked = !cb.checked;
-            setStatus(slot, cb.checked ? "checking" : "off");
-          }
-        }catch(e){
-          cb.checked = !cb.checked;
-          setStatus(slot, cb.checked ? "checking" : "off");
-        }finally{
-          cb.disabled = false;
-          setTimeout(refresh, 250);
-        }
-      });
-    });
-  })();
-</script>
+    <a id="autodartsToolsBtnFirefox"
+       href="https://addons.mozilla.org/en-US/firefox/addon/tools-for-autodarts/"
+       target="_blank" rel="noopener noreferrer" class="btn">
+      <span data-key="tools.activate_firefox_btn">Firefox / Android</span>
+    </a>
+
+    <a id="autodartsToolsBtnIOS"
+       href="https://apps.apple.com/de/app/tools-for-autodarts/id6479754594"
+       target="_blank" rel="noopener noreferrer" class="btn">
+      <span data-key="tools.activate_ios_btn">iPhone / iPad App</span>
+    </a>
+  </div>
+
+  <p class="hint" style="margin-top:10px;"><span data-key="tools.platform_text">Desktop mit Chromium-Browsern läuft über den Chrome Web Store. Firefox läuft auch über Mozilla Add-ons, inklusive Firefox für Android. Für iPhone und iPad gibt es eine App im App Store.</span></p>
+</div>
+
+
+<div class="card" id="callerInstallerCard">
+  <h2><span data-key="caller.card_title">7. Caller installieren</span></h2>
+  <p class="hint" style="margin-top:0;"><span data-key="caller.card_intro">Kein manuelles ZIP-Entpacken nötig: Der Raspberry-Button lädt die ZIP direkt aus dem Internet und entpackt alles automatisch in den Desktop-Ordner.</span></p>
+  <p class="hint"><strong><span data-key="caller.pi_label">Raspberry:</span></strong> <span data-key="caller.pi_hint">„Auf diesem Raspberry installieren“ arbeitet immer auf dem Gerät, auf dem dieses Webpanel läuft – auch wenn du das Panel gerade von Handy, Tablet oder Laptop geöffnet hast.</span></p>
+  <p class="hint"><strong><span data-key="caller.windows_label">Windows:</span></strong> <span data-key="caller.windows_hint">Der Windows-Button lädt eine BAT-Datei herunter. Diese muss nur einmal gestartet werden; die ZIP wird dann automatisch geladen und nach Desktop\Caller entpackt.</span></p>
+
+  <div class="btn-row" style="margin-top:12px; gap:10px; flex-wrap:wrap;">
+    <button type="button" class="btn btn-primary" id="callerInstallPiBtn"><span data-key="caller.install_pi_btn">Auf diesem Raspberry installieren</span></button>
+    <a href="{{ url_for('download_windows_caller_install_bat') }}" class="btn" id="callerInstallWindowsBtn" download><span data-key="caller.download_windows_btn">Windows Installer herunterladen</span></a>
+  </div>
+
+  <p class="hint" id="callerInstallerStatus" style="margin-top:10px;"></p>
+</div>
+
+<div id="autodartsThemeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:2500; align-items:center; justify-content:center; padding:18px;">
+  <div style="background:#1c1c1c; color:#f4f4f4; border:1px solid #333; border-radius:16px; width:min(560px, 96vw); box-shadow:0 24px 60px rgba(0,0,0,.45); overflow:hidden;">
+    <div style="padding:16px 18px; border-bottom:1px solid #333; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <strong id="autodartsThemeModalTitle" style="font-size:1.05rem;">Info</strong>
+      <button type="button" id="autodartsThemeModalCloseX" class="btn btn-small">×</button>
     </div>
+    <div style="padding:18px;">
+      <div id="autodartsThemeModalBody" style="white-space:pre-line; line-height:1.5;"></div>
+      <img id="autodartsThemeModalImage" alt="Theme Vorschau groß" style="display:none; margin-top:14px; width:100%; border-radius:12px; border:1px solid #333;">
+    </div>
+    <div style="padding:0 18px 18px; display:flex; justify-content:flex-end;">
+      <button type="button" id="autodartsThemeModalCloseBtn" class="btn btn-primary"><span data-key="common.close_btn">Schließen</span></button>
+    </div>
+  </div>
+</div>
 
-    <!-- NUR FÜR ADMINISTRATOR -->
     <div id="admin"></div>
     <div class="card">
       <details id="admin_details">
-        <summary>Admin-Bereich anzeigen</summary>
+        <summary><span data-key="admin.summary">Admin-Bereich anzeigen</span></summary>
 
         {% if adminmsg %}
           <p class="{{ 'msg-ok' if adminok else 'msg-bad' }}" style="margin-top:10px;">{{ adminmsg }}</p>
@@ -884,486 +670,368 @@ Hinweis: Dadurch können Updates wieder automatisch installiert werden.');">
 
         {% if not admin_unlocked %}
           {% if adminerr %}
-            <p class="msg-bad" style="margin-top:10px;">Falsches Admin-Passwort.</p>
+            <p class="msg-bad" style="margin-top:10px;"><span data-key="admin.wrong_password">Falsches Admin-Passwort.</span></p>
           {% endif %}
           <form method="post" action="{{ url_for('admin_unlock') }}" style="margin-top:12px;">
-            <label for="admin_password">Admin-Passwort</label>
-            <input type="password" id="admin_password" name="admin_password" placeholder="Passwort eingeben" autocomplete="off">
+            <label for="admin_password"><span data-key="admin.password_label">Admin-Passwort</span></label>
+            <input type="password" id="admin_password" name="admin_password" placeholder="Passwort eingeben" data-placeholder-key="admin.password_placeholder" autocomplete="off">
             <div class="btn-row">
-              <button type="submit" class="btn btn-primary">Freischalten</button>
+              <button type="submit" class="btn btn-primary"><span data-key="admin.unlock_btn">Freischalten</span></button>
             </div>
-            <p class="hint">Nur für Einstellungen und Diagnose.</p>
+            <p class="hint"><span data-key="admin.unlock_hint">Nur für Einstellungen und Diagnose.</span></p>
           </form>
         {% else %}
 
           <form method="post" action="{{ url_for('admin_lock') }}" style="margin-top:12px;">
-            <button type="submit" class="btn btn-small">Admin sperren</button>
+            <button type="submit" class="btn btn-small"><span data-key="admin.lock_btn">Admin sperren</span></button>
           </form>
 
-
-           <h3 style="margin:0 0 8px;">System</h3>
-           <p class="hint" style="margin-top:0;">
-             Neustart startet den Mini PC sofort neu. „System updaten & Reboot“ führt ein <code>apt-get update/upgrade</code> aus und startet danach automatisch neu.
-           </p>
-
-           <div class="btn-row">
-             <form method="post" action="{{ url_for('admin_os_update') }}"
-                   onsubmit="return confirm('System-Update starten?
-Der Pi rebootet danach automatisch.');" style="margin:0;">
-               <button type="submit" class="btn btn-primary">System updaten & Reboot</button>
-             </form>
-           </div>
-
-           <p class="hint" style="margin-top:8px;">
-             Neustart und Herunterfahren befinden sich jetzt links oben im Schnellzugriff.
-           </p>
-
-           {% if os_update_state.started %}
-             <p class="hint" style="margin-top:8px;">
-               Letztes System-Update gestartet: <code>{{ os_update_state.started }}</code>
-               {% if os_update_state.unit %}(Unit: <code>{{ os_update_state.unit }}</code>){% endif %}
-             </p>
-           {% endif %}
-
-           {% if os_update_log_tail %}
-             <details style="margin-top:10px;">
-               <summary>System-Update-Log anzeigen</summary>
-               <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:10px 0 0;">{{ os_update_log_tail }}</pre>
-             </details>
-           {% endif %}
-
-           <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
-
-           <h3 style="margin:0 0 8px;">Firewall (UFW)</h3>
-
-           {% if not ufw_installed %}
-             <p class="hint" style="margin-top:0;">
-               UFW ist nicht installiert.
-             </p>
-           {% else %}
-             <p class="hint" style="margin-top:0;">
-               Status: <strong>
-                 {% if ufw_state.status == 'active' %}aktiv
-                 {% elif ufw_state.status == 'inactive' %}inaktiv
-                 {% elif ufw_state.status == 'installing' %}Installation läuft…
-                 {% else %}unbekannt{% endif %}
-               </strong>
-               {% if ufw_state.checked %} · zuletzt geprüft: <code>{{ ufw_state.checked }}</code>{% endif %}
-             </p>
-           {% endif %}
-
-           <div class="btn-row">
-             <form method="post" action="{{ url_for('admin_ufw_refresh') }}" style="margin:0;">
-               <button type="submit" class="btn">Status aktualisieren</button>
-             </form>
-
-             <form method="post" action="{{ url_for('admin_ufw_install') }}"
-                   onsubmit="return confirm('UFW installieren, Ports freigeben und aktivieren?
-
-SSH (22/tcp) bleibt erlaubt.');" style="margin:0;">
-               <button type="submit" class="btn {% if ufw_installed %}btn-disabled{% endif %}" {% if ufw_installed %}disabled{% endif %}>
-                 UFW installieren
-               </button>
-             </form>
-
-             <form method="post" action="{{ url_for('admin_ufw_apply_ports') }}"
-                   onsubmit="return confirm('Ports in UFW freigeben? (kann mehrfach ausgeführt werden)');" style="margin:0;">
-               <button type="submit" class="btn {% if not ufw_installed %}btn-disabled{% endif %}" {% if not ufw_installed %}disabled{% endif %}>
-                 Ports freigeben
-               </button>
-             </form>
-
-             <form method="post" action="{{ url_for('admin_ufw_enable') }}"
-                   onsubmit="return confirm('UFW aktivieren?');" style="margin:0;">
-               <button type="submit" class="btn btn-primary {% if not ufw_installed %}btn-disabled{% endif %}" {% if not ufw_installed %}disabled{% endif %}>
-                 UFW EIN
-               </button>
-             </form>
-
-             <form method="post" action="{{ url_for('admin_ufw_disable') }}"
-                   onsubmit="return confirm('UFW deaktivieren?');" style="margin:0;">
-               <button type="submit" class="btn {% if not ufw_installed %}btn-disabled{% endif %}" {% if not ufw_installed %}disabled{% endif %}>
-                 UFW AUS
-               </button>
-             </form>
-           </div>
-
-           {% if ufw_state.raw %}
-             <details style="margin-top:10px;">
-               <summary>UFW Status anzeigen</summary>
-               <pre style="background:#0b0b0b; padding:12px; border-radius:12px; border:1px solid #333; white-space:pre-wrap; margin:10px 0 0;">{{ ufw_state.raw }}</pre>
-             </details>
-           {% endif %}
-
-           <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
-
-
-          
-          <h3 style="margin:0 0 8px;">Webpanel Software</h3>
+          <h3 style="margin:0 0 8px;"><span data-key="admin.system_title">System</span></h3>
           <p class="hint" style="margin-top:0;">
-            Installierte Version: <strong>{{ webpanel_version or 'unbekannt' }}</strong>
+            <span data-key="admin.system_hint_start">Neustart startet den Mini PC sofort neu. „System updaten & Reboot“ führt ein</span> <code>apt-get update/upgrade</code> <span data-key="admin.system_hint_end">aus und startet danach automatisch neu.</span>
           </p>
 
-                <p class="hint" style="margin-top:0;">
-                  Update prüfen und installieren befindet sich jetzt links oben im Schnellzugriff.
-                  Das Log bleibt hier im Admin-Bereich.
-                </p>
+          <div class="btn-row">
+            <form method="post" action="{{ url_for('admin_os_update') }}"
+                  data-confirm-key="confirm.system_update"
+                  onsubmit="return confirm('System-Update starten?\nDer Pi rebootet danach automatisch.');" style="margin:0;">
+              <button type="submit" class="btn btn-primary"><span data-key="admin.system_update_btn">System updaten & Reboot</span></button>
+            </form>
+          </div>
 
-                <div class="btn-row">
-                  <form method="post" action="{{ url_for('admin_webpanel_uvc_install') }}"
-                        onsubmit="return confirm('{% if uvc_backup_info.backup_exists %}Original-Backup für Kernel {{ uvc_backup_info.kernel }} ist bereits vorhanden und wird NICHT überschrieben.{% elif uvc_backup_info.marker_exists %}ACHTUNG: Kein Original-Backup für Kernel {{ uvc_backup_info.kernel }} vorhanden, aber alter UVC-Marker gefunden. Die sichere Installation wird deshalb abgebrochen, bis ein Backup nach {{ uvc_backup_info.backup_dir }} kopiert wurde.{% else %}Vor der Installation wird ein Original-Backup für Kernel {{ uvc_backup_info.kernel }} nach {{ uvc_backup_info.backup_dir }} geschrieben.{% endif %}
+          <p class="hint" style="margin-top:8px;">
+            <span data-key="admin.quick_access_hint">Neustart und Herunterfahren befinden sich jetzt links oben im Schnellzugriff.</span>
+          </p>
 
-NICHT BEI FOLGENDEN KAMERAS INSTALLIEREN:
-GXVISION IMX179
-
-UVC Hack jetzt installieren?');" style="margin:0;">
-                    <button type="submit" class="btn">UVC Hack installieren</button>
-                  </form>
-
-                  <form method="post" action="{{ url_for('admin_webpanel_uvc_uninstall') }}"
-                        onsubmit="return confirm('{% if uvc_backup_info.backup_exists %}Original-Backup für Kernel {{ uvc_backup_info.kernel }} ist vorhanden. Der UVC-Hack wird ausschließlich aus diesem lokalen Backup zurückgesetzt. Der Mini PC startet danach automatisch neu.{% else %}ACHTUNG: Kein Original-Backup vorhanden. Sichere Deinstallation per Button ist so NICHT möglich. Der Vorgang bricht ab, bis ein Backup nach {{ uvc_backup_info.backup_dir }} kopiert wurde.{% endif %}
-
-UVC Hack deinstallieren?');" style="margin:0;">
-                    <button type="submit" class="btn btn-danger">UVC Hack deinstallieren</button>
-                  </form>
-                  <button type="button" class="btn" onclick="(function(btn){const box=document.getElementById('uvc-backup-info-box'); if(!box) return; const show = box.style.display === 'none' || box.style.display === ''; box.style.display = show ? 'block' : 'none'; btn.textContent = show ? 'Info ausblenden' : 'Info';})(this);">Info</button>
-                </div>
-
-                <div id="uvc-backup-info-box" style="display:none; margin-top:8px;">
-                  <p class="hint" style="margin-top:0;">
-                    UVC Backup (Kernel {{ uvc_backup_info.kernel }}):
-                    {% if uvc_backup_info.backup_exists %}<span style="color:#6be26b;">vorhanden</span>{% else %}<span style="color:#ff6b6b;">fehlt</span>{% endif %}
-                    · Marker: {% if uvc_backup_info.marker_exists %}<span style="color:#ffb347;">vorhanden</span>{% else %}<span style="color:#6be26b;">fehlt</span>{% endif %}
-                    · Pfad: <code>{{ uvc_backup_info.backup_dir }}</code>
-                  </p>
-
-                  {% if (not uvc_backup_info.backup_exists) and uvc_backup_info.marker_exists %}
-                    <p class="info-msg" style="margin-top:8px;">
-                      Für diesen Kernel wurde schon einmal ein UVC-Hack markiert, aber es gibt kein Original-Backup.
-                      Bitte <code>uvcvideo.ko</code> und/oder <code>uvcvideo.ko.xz</code> in <code>{{ uvc_backup_info.backup_dir }}</code> ablegen.
-                      Erst danach ist die sichere Deinstallation per Button möglich.
-                    </p>
-                  {% endif %}
-                </div>
-
+          {% if os_update_state.started %}
             <p class="hint" style="margin-top:8px;">
-              {% if webpanel_check.latest %}
-                Letzter Check: <strong>{{ webpanel_check.installed or 'unbekannt' }}</strong> → <strong>{{ webpanel_check.latest }}</strong>
-                {% if webpanel_update_available %}
-                  <span style="color:#ffb347;">(Update verfügbar)</span>
-                {% else %}
-                  <span style="color:#6be26b;">(aktuell)</span>
-                {% endif %}
-              {% else %}
-                Tipp: Erst „Update prüfen“, dann nur bei Bedarf aktualisieren.
-              {% endif %}
+              <span data-key="admin.last_system_update">Letztes System-Update gestartet:</span> <code>{{ os_update_state.started }}</code>
+              {% if os_update_state.unit %}(Unit: <code>{{ os_update_state.unit }}</code>){% endif %}
             </p>
+          {% endif %}
+
+          {% if os_update_log_tail %}
+            <details style="margin-top:10px;">
+              <summary><span data-key="admin.system_update_log_summary">System-Update-Log anzeigen</span></summary>
+              <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:10px 0 0;">{{ os_update_log_tail }}</pre>
+            </details>
+          {% endif %}
+
+          <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
+
+          <h3 style="margin:0 0 8px;"><span data-key="admin.ufw_title">Firewall (UFW)</span></h3>
+
+          {% if not ufw_installed %}
+            <p class="hint" style="margin-top:0;">
+              <span data-key="admin.ufw_not_installed">UFW ist nicht installiert.</span>
+            </p>
+          {% else %}
+            <p class="hint" style="margin-top:0;">
+              <span data-key="common.status_label">Status:</span> <strong>
+                {% if ufw_state.status == 'active' %}<span data-key="admin.ufw_state_active">aktiv</span>
+                {% elif ufw_state.status == 'inactive' %}<span data-key="admin.ufw_state_inactive">inaktiv</span>
+                {% elif ufw_state.status == 'installing' %}<span data-key="admin.ufw_state_installing">Installation läuft…</span>
+                {% else %}<span data-key="common.unknown">unbekannt</span>{% endif %}
+              </strong>
+              {% if ufw_state.checked %}<span data-key="admin.last_checked_label"> · zuletzt geprüft:</span> <code>{{ ufw_state.checked }}</code>{% endif %}
+            </p>
+          {% endif %}
+
+          <div class="btn-row">
+            <form method="post" action="{{ url_for('admin_ufw_refresh') }}" style="margin:0;">
+              <button type="submit" class="btn"><span data-key="admin.ufw_refresh_btn">Status aktualisieren</span></button>
+            </form>
+
+            <form method="post" action="{{ url_for('admin_ufw_install') }}"
+                  data-confirm-key="confirm.ufw_install"
+                  onsubmit="return confirm('UFW installieren, Ports freigeben und aktivieren?\n\nSSH (22/tcp) bleibt erlaubt.');" style="margin:0;">
+              <button type="submit" class="btn {% if ufw_installed %}btn-disabled{% endif %}" {% if ufw_installed %}disabled{% endif %}>
+                <span data-key="admin.ufw_install_btn">UFW installieren</span>
+              </button>
+            </form>
+
+            <form method="post" action="{{ url_for('admin_ufw_apply_ports') }}"
+                  data-confirm-key="confirm.ufw_apply_ports"
+                  onsubmit="return confirm('Ports in UFW freigeben? (kann mehrfach ausgeführt werden)');" style="margin:0;">
+              <button type="submit" class="btn {% if not ufw_installed %}btn-disabled{% endif %}" {% if not ufw_installed %}disabled{% endif %}>
+                <span data-key="admin.ufw_ports_btn">Ports freigeben</span>
+              </button>
+            </form>
+
+            <form method="post" action="{{ url_for('admin_ufw_enable') }}"
+                  data-confirm-key="confirm.ufw_enable"
+                  onsubmit="return confirm('UFW aktivieren?');" style="margin:0;">
+              <button type="submit" class="btn btn-primary {% if not ufw_installed %}btn-disabled{% endif %}" {% if not ufw_installed %}disabled{% endif %}>
+                <span data-key="admin.ufw_on_btn">UFW EIN</span>
+              </button>
+            </form>
+
+            <form method="post" action="{{ url_for('admin_ufw_disable') }}"
+                  data-confirm-key="confirm.ufw_disable"
+                  onsubmit="return confirm('UFW deaktivieren?');" style="margin:0;">
+              <button type="submit" class="btn {% if not ufw_installed %}btn-disabled{% endif %}" {% if not ufw_installed %}disabled{% endif %}>
+                <span data-key="admin.ufw_off_btn">UFW AUS</span>
+              </button>
+            </form>
+          </div>
+
+          {% if ufw_state.raw %}
+            <details style="margin-top:10px;">
+              <summary><span data-key="admin.ufw_status_summary">UFW Status anzeigen</span></summary>
+              <pre style="background:#0b0b0b; padding:12px; border-radius:12px; border:1px solid #333; white-space:pre-wrap; margin:10px 0 0;">{{ ufw_state.raw }}</pre>
+            </details>
+          {% endif %}
+
+          <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
+
+          <h3 style="margin:0 0 8px;"><span data-key="admin.webpanel_title">Webpanel Software</span></h3>
+          <p class="hint" style="margin-top:0;">
+            <span data-key="common.installed_version_label">Installierte Version:</span> <strong>{{ webpanel_version or 'unbekannt' }}</strong>
+          </p>
+
+          <p class="hint" style="margin-top:0;">
+            <span data-key="admin.webpanel_quick_access_hint">Update prüfen und installieren befindet sich jetzt links oben im Schnellzugriff.
+            Das Log bleibt hier im Admin-Bereich.</span>
+          </p>
+
+          <div class="btn-row">
+            <form method="post" action="{{ url_for('admin_webpanel_uvc_install') }}"
+                  data-confirm-key="confirm.uvc_install"
+                  onsubmit="return confirm('{% if uvc_backup_info.backup_exists %}Original-Backup für Kernel {{ uvc_backup_info.kernel }} ist bereits vorhanden und wird NICHT überschrieben.{% elif uvc_backup_info.marker_exists %}ACHTUNG: Kein Original-Backup für Kernel {{ uvc_backup_info.kernel }} vorhanden, aber alter UVC-Marker gefunden. Die sichere Installation wird deshalb abgebrochen, bis ein Backup nach {{ uvc_backup_info.backup_dir }} kopiert wurde.{% else %}Vor der Installation wird ein Original-Backup für Kernel {{ uvc_backup_info.kernel }} nach {{ uvc_backup_info.backup_dir }} geschrieben.{% endif %}\n\nNICHT BEI FOLGENDEN KAMERAS INSTALLIEREN:\nGXVISION IMX179\n\nUVC Hack jetzt installieren?');" style="margin:0;">
+              <button type="submit" class="btn"><span data-key="admin.uvc_install_btn">UVC Hack installieren</span></button>
+            </form>
+
+            <form method="post" action="{{ url_for('admin_webpanel_uvc_uninstall') }}"
+                  data-confirm-key="confirm.uvc_uninstall"
+                  onsubmit="return confirm('{% if uvc_backup_info.backup_exists %}Original-Backup für Kernel {{ uvc_backup_info.kernel }} ist vorhanden. Der UVC-Hack wird ausschließlich aus diesem lokalen Backup zurückgesetzt. Der Mini PC startet danach automatisch neu.{% else %}ACHTUNG: Kein Original-Backup vorhanden. Sichere Deinstallation per Button ist so NICHT möglich. Der Vorgang bricht ab, bis ein Backup nach {{ uvc_backup_info.backup_dir }} kopiert wurde.{% endif %}\n\nUVC Hack deinstallieren?');" style="margin:0;">
+              <button type="submit" class="btn btn-danger"><span data-key="admin.uvc_uninstall_btn">UVC Hack deinstallieren</span></button>
+            </form>
+            <button type="button" class="btn" onclick="(function(btn){const box=document.getElementById('uvc-backup-info-box'); if(!box) return; const show = box.style.display === 'none' || box.style.display === ''; box.style.display = show ? 'block' : 'none'; btn.textContent = show ? 'Info ausblenden' : 'Info';})(this);"><span data-key="common.info_btn">Info</span></button>
+          </div>
+
+          <div id="uvc-backup-info-box" style="display:none; margin-top:8px;">
+            <p class="hint" style="margin-top:0;">
+              UVC Backup (Kernel {{ uvc_backup_info.kernel }}):
+              {% if uvc_backup_info.backup_exists %}<span style="color:#6be26b;" data-key="common.available">vorhanden</span>{% else %}<span style="color:#ff6b6b;" data-key="common.missing">fehlt</span>{% endif %}
+              · <span data-key="admin.marker_label">Marker:</span> {% if uvc_backup_info.marker_exists %}<span style="color:#ffb347;" data-key="common.available">vorhanden</span>{% else %}<span style="color:#6be26b;" data-key="common.missing">fehlt</span>{% endif %}
+              · Pfad: <code>{{ uvc_backup_info.backup_dir }}</code>
+            </p>
+
+            {% if (not uvc_backup_info.backup_exists) and uvc_backup_info.marker_exists %}
+              <p class="info-msg" style="margin-top:8px;">
+                <span data-key="admin.uvc_backup_notice_start">Für diesen Kernel wurde schon einmal ein UVC-Hack markiert, aber es gibt kein Original-Backup.
+                Bitte</span> <code>uvcvideo.ko</code> <span data-key="admin.uvc_backup_notice_middle">und/oder</span> <code>uvcvideo.ko.xz</code> in <code>{{ uvc_backup_info.backup_dir }}</code> <span data-key="admin.uvc_backup_notice_end">ablegen.
+                Erst danach ist die sichere Deinstallation per Button möglich.</span>
+              </p>
+            {% endif %}
+          </div>
+
+          <p class="hint" style="margin-top:8px;">
+            {% if webpanel_check.latest %}
+              Letzter Check: <strong>{{ webpanel_check.installed or 'unbekannt' }}</strong> → <strong>{{ webpanel_check.latest }}</strong>
+              {% if webpanel_update_available %}
+                <span style="color:#ffb347;" data-key="common.update_available">(Update verfügbar)</span>
+              {% else %}
+                <span style="color:#6be26b;" data-key="common.up_to_date">(aktuell)</span>
+              {% endif %}
+            {% else %}
+              <span data-key="common.check_update_tip">Tipp: Erst „Update prüfen“, dann nur bei Bedarf aktualisieren.</span>
+            {% endif %}
+          </p>
 
           {% if webpanel_state.started %}
             <p class="hint" style="margin-top:8px;">
-              Letztes Webpanel-Update gestartet: <code>{{ webpanel_state.started }}</code>
+              <span data-key="admin.last_webpanel_update">Letztes Webpanel-Update gestartet:</span> <code>{{ webpanel_state.started }}</code>
             </p>
           {% endif %}
 
           {% if webpanel_log_tail %}
             <details style="margin-top:10px;">
-              <summary>Webpanel Update-Log anzeigen</summary>
+              <summary><span data-key="admin.webpanel_log_summary">Webpanel Update-Log anzeigen</span></summary>
               <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:10px 0 0;">{{ webpanel_log_tail }}</pre>
             </details>
           {% endif %}
 
           <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
 
-<h3 style="margin:0 0 8px;">Autodarts Software</h3>
+          <h3 style="margin:0 0 8px;"><span data-key="admin.autodarts_title">Autodarts Software</span></h3>
           <p class="hint" style="margin-top:0;">
-            Installierte Version: <strong>{{ autodarts_version or 'unbekannt' }}</strong>
+            <span data-key="common.installed_version_label">Installierte Version:</span> <strong>{{ autodarts_version or 'unbekannt' }}</strong>
           </p>
 
-                <div class="btn-row">
-                  <form method="post" action="{{ url_for('admin_autodarts_check') }}" style="margin:0;">
-                    <button type="submit" class="btn">Update prüfen</button>
-                  </form>
+          <div class="btn-row">
+            <form method="post" action="{{ url_for('admin_autodarts_check') }}" style="margin:0;">
+              <button type="submit" class="btn"><span data-key="common.check_update_btn">Update prüfen</span></button>
+            </form>
 
-                  <form method="post" action="{{ url_for('admin_autodarts_update') }}"
-                        onsubmit="return confirm('Autodarts jetzt aktualisieren?');" style="margin:0;">
-                    <button type="submit" class="btn btn-primary {% if not update_available %}btn-disabled{% endif %}">
-                      {% if update_available %}Update installieren{% else %}Autodarts aktualisieren{% endif %}
-                    </button>
-                  </form>
-                </div>
+            <form method="post" action="{{ url_for('admin_autodarts_update') }}"
+                  data-confirm-key="confirm.autodarts_update"
+                  onsubmit="return confirm('Autodarts jetzt aktualisieren?');" style="margin:0;">
+              <button type="submit" class="btn btn-primary {% if not update_available %}btn-disabled{% endif %}">
+                {% if update_available %}<span data-key="common.install_update_btn">Update installieren</span>{% else %}<span data-key="admin.autodarts_update_btn">Autodarts aktualisieren</span>{% endif %}
+              </button>
+            </form>
+          </div>
 
-            <p class="hint" style="margin-top:8px;">
-              {% if update_check.latest %}
-                Letzter Check: <strong>{{ update_check.installed or 'unbekannt' }}</strong> → <strong>{{ update_check.latest }}</strong>
-                {% if update_available %}
-                  <span style="color:#ffb347;">(Update verfügbar)</span>
-                {% else %}
-                  <span style="color:#6be26b;">(aktuell)</span>
-                {% endif %}
+          <p class="hint" style="margin-top:8px;">
+            {% if update_check.latest %}
+              Letzter Check: <strong>{{ update_check.installed or 'unbekannt' }}</strong> → <strong>{{ update_check.latest }}</strong>
+              {% if update_available %}
+                <span style="color:#ffb347;" data-key="common.update_available">(Update verfügbar)</span>
               {% else %}
-                Tipp: Erst „Update prüfen“, dann nur bei Bedarf aktualisieren.
+                <span style="color:#6be26b;" data-key="common.up_to_date">(aktuell)</span>
               {% endif %}
-            </p>
+            {% else %}
+              <span data-key="common.check_update_tip">Tipp: Erst „Update prüfen“, dann nur bei Bedarf aktualisieren.</span>
+            {% endif %}
+          </p>
 
-            <p class="hint" style="margin-top:6px;">
-              Das Update nutzt das offizielle Autodarts-Update-Script (<code>updater.sh</code>) und schreibt ein Log.
-            </p>
+          <p class="hint" style="margin-top:6px;">
+            <span data-key="admin.update_script_hint_start">Das Update nutzt das offizielle Autodarts-Update-Script (</span><code>updater.sh</code><span data-key="admin.update_script_hint_end">) und schreibt ein Log.</span>
+          </p>
 
           {% if update_state.started %}
             <p class="hint" style="margin-top:8px;">
-              Letztes Update gestartet: <code>{{ update_state.started }}</code>
+              <span data-key="admin.last_update">Letztes Update gestartet:</span> <code>{{ update_state.started }}</code>
             </p>
           {% endif %}
 
           {% if update_log_tail %}
             <details style="margin-top:10px;">
-              <summary>Update-Log anzeigen</summary>
+              <summary><span data-key="admin.autodarts_log_summary">Update-Log anzeigen</span></summary>
               <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:10px 0 0;">{{ update_log_tail }}</pre>
             </details>
           {% endif %}
 
           <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
 
-<h3 style="margin:0 0 8px;">Extensions (darts-caller / darts-wled)</h3>
-<p class="hint" style="margin-top:0;">
-  Dieser Button führt das lokal installierte Script <code>/usr/local/bin/autodarts-extensions-update.sh</code> aus und aktualisiert <strong>darts-caller</strong> und <strong>darts-wled</strong> nur dann, wenn wirklich ein Update vorhanden ist
-  (ressourcenschonend: keine unnötigen pip/Reinstalls).
-</p>
-
-<div class="btn-row">
-  <form method="post" action="{{ url_for('admin_wled_update') }}"
-        onsubmit="return confirm('WLED UPDATE starten?
-Hinweis: Wenn kein Update vorhanden ist, passiert nichts (Caller/WLED bleiben UNCHANGED).');"
-        style="margin:0;">
-    <button type="submit" class="btn btn-primary">WLED UPDATE</button>
-  </form>
-        <a href="{{ url_for('admin_journal') }}" class="btn btn-secondary" target="_blank" rel="noopener">📜 LIVE LOGS</a>
-</div>
-
-{% if extensions_state.started %}
-  <p class="hint" style="margin-top:8px;">
-    Letzter Start: <code>{{ extensions_state.started }}</code>
-    {% if extensions_state.unit %} · Unit: <code>{{ extensions_state.unit }}</code>{% endif %}
-  </p>
-{% endif %}
-
-{% if extensions_last.ts %}
-  <p class="hint" style="margin-top:8px;">
-    Letztes Ergebnis ({{ extensions_last.ts }}):
-    Caller: <code>{{ extensions_last.caller or 'n/a' }}</code> ·
-    WLED: <code>{{ extensions_last.wled or 'n/a' }}</code>
-    {% if extensions_last.backup %} · Backup: <code>{{ extensions_last.backup }}</code>{% endif %}
-  </p>
-{% endif %}
-
-{% if extensions_log_tail %}
-  <details style="margin-top:10px;">
-    <summary>Extensions Update-Log anzeigen</summary>
-    <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:10px 0 0;">{{ extensions_log_tail }}</pre>
-  </details>
-{% endif %}
-
-<hr style="border:none; border-top:1px solid #333; margin:14px 0;">
-
-
-          <h3 style="margin:0 0 8px;">LED-Bänder – Adressen</h3>
+          <h3 style="margin:0 0 8px;"><span data-key="admin.extensions_title">Extensions (darts-caller / darts-wled)</span></h3>
           <p class="hint" style="margin-top:0;">
-            Hier stellen Sie die Adresse/Hostname für LED Band 1–3 ein.
+            <span data-key="admin.extensions_hint_start">Dieser Button führt das lokal installierte Script</span> <code>/usr/local/bin/autodarts-extensions-update.sh</code> <span data-key="admin.extensions_hint_middle">aus und aktualisiert</span> <strong>darts-caller</strong> <span data-key="admin.extensions_hint_middle2">und</span> <strong>darts-wled</strong> <span data-key="admin.extensions_hint_end">nur dann, wenn wirklich ein Update vorhanden ist
+            (ressourcenschonend: keine unnötigen pip/Reinstalls).</span>
+          </p>
+
+          <div class="btn-row">
+            <form method="post" action="{{ url_for('admin_wled_update') }}"
+                  data-confirm-key="confirm.wled_update"
+                  onsubmit="return confirm('WLED UPDATE starten?\nHinweis: Wenn kein Update vorhanden ist, passiert nichts (Caller/WLED bleiben UNCHANGED).');"
+                  style="margin:0;">
+              <button type="submit" class="btn btn-primary"><span data-key="admin.wled_update_btn">WLED UPDATE</span></button>
+            </form>
+            <a href="{{ url_for('admin_journal') }}" class="btn btn-secondary" target="_blank" rel="noopener"><span data-key="admin.live_logs_btn">📜 LIVE LOGS</span></a>
+          </div>
+
+          {% if extensions_state.started %}
+            <p class="hint" style="margin-top:8px;">
+              <span data-key="admin.last_start">Letzter Start:</span> <code>{{ extensions_state.started }}</code>
+              {% if extensions_state.unit %} · Unit: <code>{{ extensions_state.unit }}</code>{% endif %}
+            </p>
+          {% endif %}
+
+          {% if extensions_last.ts %}
+            <p class="hint" style="margin-top:8px;">
+              <span data-key="admin.last_result_label">Letztes Ergebnis</span> ({{ extensions_last.ts }}):
+              <span data-key="admin.caller_label">Caller:</span> <code>{{ extensions_last.caller or 'n/a' }}</code> ·
+              <span data-key="admin.led_label">LED:</span> <code>{{ extensions_last.wled or 'n/a' }}</code>
+              {% if extensions_last.backup %} · <span data-key="admin.backup_label">Backup:</span> <code>{{ extensions_last.backup }}</code>{% endif %}
+            </p>
+          {% endif %}
+
+          {% if extensions_log_tail %}
+            <details style="margin-top:10px;">
+              <summary><span data-key="admin.extensions_log_summary">Extensions Update-Log anzeigen</span></summary>
+              <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:10px 0 0;">{{ extensions_log_tail }}</pre>
+            </details>
+          {% endif %}
+
+          <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
+
+          <h3 style="margin:0 0 8px;"><span data-key="admin.wled_hosts_title">LED-Bänder – Adressen</span></h3>
+          <p class="hint" style="margin-top:0;">
+            <span data-key="admin.wled_hosts_hint">Hier stellen Sie die Adresse/Hostname für LED Band 1–3 ein.</span>
           </p>
 
           <form method="post" action="{{ url_for('wled_save_hosts') }}">
-            <label for="wled_host_1">LED Band 1 Adresse/Hostname</label>
-            <input type="text" id="wled_host_1" name="wled_host_1" value="{{ wled_hosts[0] }}"
+            <label for="wled_host_1_admin"><span data-key="admin.wled_host1_label">LED Band 1 Adresse/Hostname</span></label>
+            <input type="text" id="wled_host_1_admin" name="wled_host_1" value="{{ wled_hosts[0] }}"
                    {% if not wled_installed %}disabled{% endif %}>
 
-            <label for="wled_host_2">LED Band 2 Adresse/Hostname</label>
-            <input type="text" id="wled_host_2" name="wled_host_2" value="{{ wled_hosts[1] }}"
+            <label for="wled_host_2_admin"><span data-key="admin.wled_host2_label">LED Band 2 Adresse/Hostname</span></label>
+            <input type="text" id="wled_host_2_admin" name="wled_host_2" value="{{ wled_hosts[1] }}"
                    {% if not wled_installed %}disabled{% endif %}>
 
-            <label for="wled_host_3">LED Band 3 Adresse/Hostname</label>
-            <input type="text" id="wled_host_3" name="wled_host_3" value="{{ wled_hosts[2] }}"
+            <label for="wled_host_3_admin"><span data-key="admin.wled_host3_label">LED Band 3 Adresse/Hostname</span></label>
+            <input type="text" id="wled_host_3_admin" name="wled_host_3" value="{{ wled_hosts[2] }}"
                    {% if not wled_installed %}disabled{% endif %}>
 
             <div class="btn-row">
               <button type="submit" class="btn btn-primary {% if not wled_installed %}btn-disabled{% endif %}">
-                Speichern
+                <span data-key="common.save_btn">Speichern</span>
               </button>
             </div>
           </form>
 
           <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
 
+          <p class="hint" style="margin-top:0;">
+            <strong><span data-key="admin.paths_title">Wichtige Pfade (für Zukunft/Backup):</span></strong><br>
+            <code>{{ usr_local_bin_dir }}</code> <span data-key="admin.paths_line1">→ Webdaten + GPIO/Tools (z.B. pi_monitor_test.sh)</span><br>
+            <code>{{ autodarts_data_dir }}</code> <span data-key="admin.paths_line2">→ Manual + GPIO Bild (GPIO_Setup.jpeg)</span><br>
+            <code>{{ extensions_dir }}</code> <span data-key="admin.paths_line3">→ Extensions (darts-caller, darts-wled)</span>
+          </p>
 
+          <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
 
+          <h3 style="margin:0 0 8px;"><span data-key="admin.gpio_title">GPIO Setup</span></h3>
+          {% if admin_gpio_exists %}
+            <img src="{{ url_for('admin_gpio_image') }}" alt="GPIO Setup" data-alt-key="admin.gpio_alt"
+                 style="width:100%; border-radius:12px; border:1px solid #333; margin-top:10px;">
+            <p class="hint" style="margin-top:8px;">
+              <span data-key="admin.image_path_label">Bildpfad:</span> <code>{{ autodarts_data_dir }}/GPIO_Setup.jpeg</code>
+            </p>
+          {% else %}
+            <p class="info-msg"><span data-key="admin.gpio_missing">GPIO_Setup.jpeg nicht gefunden unter</span> <code>{{ autodarts_data_dir }}</code></p>
+          {% endif %}
 
-      <p class="hint" style="margin-top:0;">
-        <strong>Wichtige Pfade (für Zukunft/Backup):</strong><br>
-        <code>{{ usr_local_bin_dir }}</code> → Webdaten + GPIO/Tools (z.B. pi_monitor_test.sh)<br>
-        <code>{{ autodarts_data_dir }}</code> → Manual + GPIO Bild (GPIO_Setup.jpeg)<br>
-        <code>{{ extensions_dir }}</code> → Extensions (darts-caller, darts-wled)
-      </p>
+          <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
 
-      <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
+          <h3 style="margin:0 0 8px;"><span data-key="admin.pi_monitor_title">Pi Monitor Test / Log</span></h3>
+          <div style="margin:10px 0 12px; padding:12px; border:1px solid #333; border-radius:12px; background:#101010;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+              <div>
+                <label for="piMonInterval"><span data-key="admin.pi_monitor_interval_label">Intervall</span></label>
+                <select id="piMonInterval">
+                  <option value="5">5s</option>
+                  <option value="10" selected>10s</option>
+                  <option value="15">15s</option>
+                  <option value="30">30s</option>
+                  <option value="60">60s</option>
+                </select>
+              </div>
+              <div>
+                <label for="piMonDuration"><span data-key="admin.pi_monitor_duration_label">Dauer</span></label>
+                <select id="piMonDuration">
+                  <option value="5">5min</option>
+                  <option value="10">10min</option>
+                  <option value="15">15min</option>
+                  <option value="30" selected>30min</option>
+                  <option value="60">60min</option>
+                </select>
+              </div>
 
-      <h3 style="margin:0 0 8px;">GPIO Setup</h3>
-      {% if admin_gpio_exists %}
-        <img src="{{ url_for('admin_gpio_image') }}" alt="GPIO Setup"
-             style="width:100%; border-radius:12px; border:1px solid #333; margin-top:10px;">
-        <p class="hint" style="margin-top:8px;">
-          Bildpfad: <code>{{ autodarts_data_dir }}/GPIO_Setup.jpeg</code>
-        </p>
-      {% else %}
-        <p class="info-msg">GPIO_Setup.jpeg nicht gefunden unter <code>{{ autodarts_data_dir }}</code></p>
-      {% endif %}
+              <button id="piMonStartBtn" class="btn"><span data-key="admin.pi_monitor_start_btn">Pi Monitor starten</span></button>
+              <button id="piMonStopBtn" class="btn btn-danger" style="display:none;"><span data-key="common.stop_btn">Stop</span></button>
+            </div>
 
-      <hr style="border:none; border-top:1px solid #333; margin:14px 0;">
+            <div id="piMonStatusText" class="hint" style="margin-top:8px;"></div>
 
-      <h3 style="margin:0 0 8px;">Pi Monitor Test / Log</h3>
-<div style="margin:10px 0 12px; padding:12px; border:1px solid #333; border-radius:12px; background:#101010;">
-  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
-    <div>
-      <label for="piMonInterval">Intervall</label>
-      <select id="piMonInterval">
-        <option value="5">5s</option>
-        <option value="10" selected>10s</option>
-        <option value="15">15s</option>
-        <option value="30">30s</option>
-        <option value="60">60s</option>
-      </select>
-    </div>
-    <div>
-      <label for="piMonDuration">Dauer</label>
-      <select id="piMonDuration">
-        <option value="5">5min</option>
-        <option value="10">10min</option>
-        <option value="15">15min</option>
-        <option value="30" selected>30min</option>
-        <option value="60">60min</option>
-      </select>
-    </div>
+            <div class="btn-row" style="margin-top:10px;">
+              <a href="{{ url_for('admin_pi_monitor_download', kind='csv') }}" class="btn btn-small"><span data-key="admin.pi_monitor_csv_btn">CSV herunterladen</span></a>
+              <a href="{{ url_for('admin_pi_monitor_download', kind='readme') }}" class="btn btn-small"><span data-key="admin.pi_monitor_readme_btn">README herunterladen</span></a>
+            </div>
+          </div>
 
-    <button id="piMonStartBtn" class="btn">Pi Monitor starten</button>
-    <button id="piMonStopBtn" class="btn btn-danger" style="display:none;">Stop</button>
-  </div>
-
-  <div id="piMonStatusText" class="hint" style="margin-top:8px;"></div>
-
-  <div class="btn-row" style="margin-top:10px;">
-    <a href="{{ url_for('admin_pi_monitor_download', kind='csv') }}" class="btn btn-small">CSV herunterladen</a>
-    <a href="{{ url_for('admin_pi_monitor_download', kind='readme') }}" class="btn btn-small">README herunterladen</a>
-  </div>
-</div>
-
-<script>
-  (function(){
-    const statusEl = document.getElementById('piMonStatusText');
-    const startBtn = document.getElementById('piMonStartBtn');
-    const stopBtn  = document.getElementById('piMonStopBtn');
-    const intervalSel = document.getElementById('piMonInterval');
-    const durationSel = document.getElementById('piMonDuration');
-
-    let pollTimer = null;
-
-    function fmtSeconds(s){
-      s = Math.max(0, Number(s||0));
-      const m = Math.floor(s/60);
-      const r = s % 60;
-      if(m <= 0) return r + "s";
-      return m + "m " + r + "s";
-    }
-
-    function setRunningUI(st){
-      const running = !!(st && st.running);
-      if(running){
-        startBtn.classList.add('btn-disabled');
-        startBtn.disabled = true;
-        stopBtn.style.display = 'inline-block';
-        const rem = fmtSeconds(st.remaining_sec || 0);
-        statusEl.textContent = (st.msg || "Läuft…") + (st.remaining_sec != null ? (" · Rest: " + rem) : "");
-      }else{
-        startBtn.classList.remove('btn-disabled');
-        startBtn.disabled = false;
-        stopBtn.style.display = 'none';
-        statusEl.textContent = (st && st.msg) ? st.msg : "Nicht aktiv.";
-      }
-    }
-
-    async function fetchStatus(){
-      try{
-        const rs = await fetch('/api/pi_monitor/status');
-        const st = await rs.json();
-        if(st && st.ok === false){
-          setRunningUI({running:false, msg: st.msg || "Fehler"});
-          return null;
-        }
-        setRunningUI(st);
-        return st;
-      }catch(e){
-        setRunningUI({running:false, msg: "Status nicht erreichbar: " + e});
-        return null;
-      }
-    }
-
-    function startPolling(){
-      if(pollTimer) return;
-      pollTimer = setInterval(async ()=>{
-        const st = await fetchStatus();
-        if(!st || !st.running){
-          clearInterval(pollTimer);
-          pollTimer = null;
-        }
-      }, 5000);
-    }
-
-    startBtn.addEventListener('click', async ()=>{
-      if(startBtn.disabled) return;
-      startBtn.classList.add('btn-disabled');
-      startBtn.disabled = true;
-      statusEl.textContent = "Starte…";
-      const interval_s = parseInt(intervalSel.value, 10);
-      const duration_min = parseInt(durationSel.value, 10);
-      try{
-        const rs = await fetch('/api/pi_monitor/start', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({interval_s, duration_min})
-        });
-        const st = await rs.json();
-        if(!st.ok){
-          setRunningUI({running:false, msg: st.msg || "Start fehlgeschlagen."});
-          return;
-        }
-        setRunningUI(st);
-        startPolling();
-      }catch(e){
-        setRunningUI({running:false, msg:"Start fehlgeschlagen: " + e});
-      }
-    });
-
-    stopBtn.addEventListener('click', async ()=>{
-      stopBtn.classList.add('btn-disabled');
-      stopBtn.disabled = true;
-      try{
-        const rs = await fetch('/api/pi_monitor/stop', {method:'POST'});
-        const st = await rs.json();
-        stopBtn.classList.remove('btn-disabled');
-        stopBtn.disabled = false;
-        await fetchStatus();
-      }catch(e){
-        stopBtn.classList.remove('btn-disabled');
-        stopBtn.disabled = false;
-        statusEl.textContent = "Stop fehlgeschlagen: " + e;
-      }
-    });
-
-    // initialer Status aus Server-Render
-    const initial = {{ pi_mon_status|tojson }};
-    setRunningUI(initial);
-    if(initial && initial.running) startPolling();
-  })();
-</script>
-
-      <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:0;">
+          <pre data-key="admin.pi_monitor_pre" style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:0;">
 # 1) Script bearbeiten (falls nötig)
 sudo nano /usr/local/bin/pi_monitor_test.sh
 
@@ -1388,232 +1056,133 @@ cat /var/log/pi_monitor_test_README.txt
 # 8) Datei auf den Desktop/Home kopieren (zum leichter runterladen)
 cp /var/log/pi_monitor_test.csv ~/
 cp /var/log/pi_monitor_test_README.txt ~/
-      </pre>
+          </pre>
 
-      <p class="hint" style="margin-top:10px;">
-        Log-Dateien:<br>
-        Script: <code>{{ pi_monitor_script }}</code><br>
-        CSV: <code>{{ pi_monitor_csv }}</code><br>
-        README: <code>{{ pi_monitor_readme }}</code><br>
-        Output-Log: <code>{{ pi_monitor_outlog }}</code>
-      </p>
+          <p class="hint" style="margin-top:10px;">
+            <span data-key="admin.log_files_label">Log-Dateien:</span><br>
+            <span data-key="admin.script_label">Script:</span> <code>{{ pi_monitor_script }}</code><br>
+            <span data-key="admin.csv_label">CSV:</span> <code>{{ pi_monitor_csv }}</code><br>
+            <span data-key="admin.readme_label">README:</span> <code>{{ pi_monitor_readme }}</code><br>
+            <span data-key="admin.output_log_label">Output-Log:</span> <code>{{ pi_monitor_outlog }}</code>
+          </p>
 
-      {% if pi_csv_exists %}
-        <h3 style="margin:14px 0 8px;">Letzte 20 Zeilen (CSV)</h3>
-        <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:0;">{{ pi_csv_tail }}</pre>
-      {% else %}
-        <p class="hint">CSV existiert aktuell nicht (noch kein Test gelaufen).</p>
-      {% endif %}
+          {% if pi_csv_exists %}
+            <h3 style="margin:14px 0 8px;"><span data-key="admin.pi_monitor_last20_title">Letzte 20 Zeilen (CSV)</span></h3>
+            <pre style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:0;">{{ pi_csv_tail }}</pre>
+          {% else %}
+            <p class="hint"><span data-key="admin.csv_missing">CSV existiert aktuell nicht (noch kein Test gelaufen).</span></p>
+          {% endif %}
 
-      <p class="hint" style="margin-top:12px;">
-        Extensions Details:<br>
-        Caller: <code>{{ extensions_dir }}/darts-caller</code><br>
-        LED: <code>{{ extensions_dir }}/darts-wled</code>
-      </p>
+          <p class="hint" style="margin-top:12px;">
+            <span data-key="admin.extensions_details_label">Extensions Details:</span><br>
+            <span data-key="admin.caller_label">Caller:</span> <code>{{ extensions_dir }}/darts-caller</code><br>
+            <span data-key="admin.led_label">LED:</span> <code>{{ extensions_dir }}/darts-wled</code>
+          </p>
 
         {% endif %}
       </details>
     </div>
 
-
     <footer>
-      Autodarts Installations-Panel · 10.77.0.1 · Mini PC-AP: {{ current_ap_ssid or 'Autodartsinstall1' }}
+      <span data-key="footer.panel_prefix">Autodarts Installations-Panel · 10.77.0.1 · Mini PC-AP:</span> {{ current_ap_ssid or 'Autodartsinstall1' }}
     </footer>
   </div>
 
-<div id="pingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:2000; align-items:center; justify-content:center;">
-  <div style="background:#1c1c1c; border:1px solid #333; border-radius:14px; padding:18px 18px; width:min(520px,92vw); box-shadow:0 0 30px rgba(0,0,0,.7);">
-    <div id="pingOverlayTitle" style="font-weight:800; margin-bottom:10px;">Verbindungstest läuft…</div>
-    <div id="pingOverlayText" style="margin-bottom:10px; opacity:.9;">Starte…</div>
-    <div style="height:10px; background:#0b0b0b; border:1px solid #333; border-radius:999px; overflow:hidden;">
-      <div id="pingOverlayBar" style="height:100%; width:0%; background:#3b82f6;"></div>
+  <div id="pingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:2000; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#1c1c1c; border:1px solid #333; border-radius:14px; padding:18px; width:min(720px,96vw); box-shadow:0 0 30px rgba(0,0,0,.7);">
+      <div id="pingOverlayTitle" style="font-weight:800; margin-bottom:10px;"><span data-key="wifi.ping_btn">Verbindungstest (30 Pakete)</span></div>
+
+      <div class="hint" style="margin-top:0;">
+        <span data-key="overlay.hint_main">Dieser Test pingt den</span> <strong><span data-key="overlay.hint_router">Gateway/Router</span></strong> <span data-key="overlay.hint_suffix">(nicht autodarts.io) und zeigt Paketverlust &amp; Latenz.
+        Dauer: ca. 30 Sekunden.</span>
+      </div>
+
+      <div id="pingOverlayText" class="hint" style="margin-top:10px;"><span data-key="overlay.starting">Starte…</span></div>
+
+      <div style="height:10px; background:#0b0b0b; border:1px solid #333; border-radius:999px; overflow:hidden; margin-top:10px;">
+        <div id="pingOverlayBar" style="height:100%; width:0%; background:#3b82f6;"></div>
+      </div>
+
+      <pre id="pingOverlayOut" style="background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #333; overflow:auto; white-space:pre-wrap; margin:12px 0 0;">—</pre>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button type="button" id="pingOverlayAgain" class="btn btn-primary"><span data-key="overlay.restart_btn">Erneut starten</span></button>
+        <button type="button" id="pingOverlayClose" class="btn"><span data-key="common.close_btn">Schließen</span></button>
+      </div>
     </div>
-    <div class="hint" style="margin-top:10px;">Bitte warten – das dauert ca. 30 Sekunden.</div>
   </div>
-</div>
 
-<script>
-(function(){
-  function initPingUi(){
-    const btn = document.getElementById('pingBtn');
-    const overlay = document.getElementById('pingOverlay');
-    const txt = document.getElementById('pingOverlayText');
-    const bar = document.getElementById('pingOverlayBar');
-    const out = document.getElementById('pingResult');
-    const titleEl = document.getElementById('pingOverlayTitle');
+  <script>
+    window.app_urls = {
+      api_wled_status: "{{ url_for('api_wled_status') }}",
+      api_wifi_signal: "{{ url_for('api_wifi_signal') }}",
+      api_langs: "/api/langs",
+      api_lang_default: "/api/lang/default",
+      api_autodarts_theme_select: "{{ url_for('api_autodarts_theme_select') }}",
+      api_autodarts_theme_state: "{{ url_for('api_autodarts_theme_state') }}",
+      api_autodarts_display_info: "{{ url_for('api_autodarts_display_info') }}",
+      api_autodarts_display_mode: "{{ url_for('api_autodarts_display_mode') }}",
+      api_ap_client_internet_status: "{{ url_for('api_ap_client_internet_status') }}"
+    };
 
-    function showOverlay(){ if(overlay){ overlay.style.display='flex'; } }
-    function hideOverlay(){ if(overlay){ overlay.style.display='none'; } }
-    function setProgress(done, total){
-      const pct = total ? Math.max(0, Math.min(100, Math.round((done/total)*100))) : 0;
-      if(bar) bar.style.width = pct + '%';
-    }
+    window.app_data = {
+      pi_mon_status: {{ pi_mon_status|tojson }},
+      autodarts_theme_selected: {{ autodarts_theme_selected|tojson }},
+      autodarts_display_info: {{ autodarts_display_info|tojson }}
+    };
+    window.autodartsDisplayTexts = {{ {
+      "currentMode": t("themes.display_current_mode", "Aktuell aktiv: {mode}", mode="{mode}"),
+      "currentModeWithOutput": t("themes.display_current_mode_with_output", "Aktuell aktiv auf {output}: {mode}", output="{output}", mode="{mode}"),
+      "unknownMode": t("themes.display_unknown_mode", "unbekannt"),
+      "loading": t("themes.display_loading", "Bildschirm-Liste wird geladen…"),
+      "refreshDone": t("themes.display_refresh_done", "Bildschirm-Liste wurde neu geladen."),
+      "refreshFailed": t("themes.display_refresh_failed", "Bildschirm-Liste konnte nicht geladen werden."),
+      "applyFailed": t("themes.display_apply_failed", "Die Auflösung konnte nicht gesetzt werden."),
+      "networkError": t("themes.display_network_error", "Keine Verbindung zum Webpanel möglich."),
+      "outputRequired": t("themes.display_output_required", "Bitte zuerst einen Bildschirm-Ausgang auswählen."),
+      "modeRequired": t("themes.display_mode_required", "Bitte zuerst eine Auflösung auswählen."),
+      "noOutputs": t("themes.display_no_outputs", "Keine aktiven Bildschirm-Ausgänge gefunden."),
+      "unavailable": t("themes.display_no_monitor", "Es wurde kein aktiver Monitor am Raspberry erkannt.")
+    } | tojson }};
 
-    // Verbindungseinstufung (strenger Range)
-    function classifyPingQuality(s, total, recv){
-      const sent = Number(s.count || total || 30);
-      const rec = Number(recv || 0);
-      if(!sent || sent <= 0){
-        return { level: 'unknown', label: 'Unbekannt', loss: null };
-      }
-      const lost = Math.max(0, sent - rec);
-      const loss = Math.round((lost * 1000) / sent) / 10; // 1 Nachkommastelle
+    window.autodartsThemeTexts = {{ {
+      "savedDefault": t("themes.saved_default", "Default-Theme aktiviert."),
+      "savedTheme": t("themes.saved_theme", "Theme '{theme}' aktiviert.", theme="{theme}"),
+      "thanksBody": t("themes.thanks_body", "Wir danken:
+{author}
 
-      const minMs = (s.min_ms != null) ? Number(s.min_ms) : null;
-      const maxMs = (s.max_ms != null) ? Number(s.max_ms) : null;
-      const avgMs = (s.avg_ms != null) ? Number(s.avg_ms) : null;
+für die Bereitstellung dieses Themes.
 
-      // Falls keine Laufzeiten, nur grobe Einstufung
-      if(minMs === null || maxMs === null || avgMs === null){
-        if(loss === 0) return { level: 'gut', label: 'Gute Verbindung', loss };
-        if(loss < 3) return { level: 'grenzwertig', label: 'Könnte funktionieren', loss };
-        return { level: 'nicht_spielbar', label: 'Nicht mehr spielbar', loss };
-      }
+Spielmodi: {modes}
+Auflösung: {resolution}"),
+      "infoBody": t("themes.info_body", "Hinweis:
+Diese Theme-Funktion unterstützt nur 16:9-Auflösungen.
 
-      // Super
-      if(loss === 0 && avgMs <= 30 && maxMs <= 60){
-        return { level: 'super', label: 'Super Verbindung', loss };
-      }
-      // Gut
-      if(loss < 1 && avgMs <= 60 && maxMs <= 120){
-        return { level: 'gut', label: 'Gute Verbindung', loss };
-      }
-      // Grenzwertig
-      if(loss < 3 && avgMs <= 120 && maxMs <= 300){
-        return { level: 'grenzwertig', label: 'Könnte funktionieren', loss };
-      }
-      // Schlecht
-      return { level: 'nicht_spielbar', label: 'Nicht mehr spielbar', loss };
-    }
+Empfohlene Auflösungen:
+1920 × 1080
+1760 × 990
+1600 × 900
+1366 × 768
+1280 × 720
 
-    function esc(s){ return (s == null) ? '' : String(s); }
+Wenn Autodarts größere Änderungen am Layout oder an CSS-Klassen macht, müssen Themes unter Umständen angepasst werden."),
+      "selectedInfoBody": t("themes.selected_info_body", "Autor: {author}
+Spielmodi: {modes}
+Auflösung: {resolution}
 
-    async function startPing(){
-      if(!btn) return;
-      if(btn.classList.contains('btn-disabled')) return;
+Wenn Autodarts größere Änderungen am Layout oder an CSS-Klassen macht, müssen Themes unter Umständen angepasst werden."),
+      "authorUnknown": t("themes.author_unknown", "unbekannt"),
+      "metaUnknown": t("themes.meta_unknown", "nicht angegeben"),
+      "saveFailed": t("themes.save_failed", "Theme konnte nicht gespeichert werden."),
+      "networkError": t("themes.network_error", "Keine Verbindung zum Webpanel möglich."),
+      "noThemeSelected": t("themes.no_theme_selected", "Bitte ein Theme auswählen.")
+    } | tojson }};
+  </script>
 
-      btn.classList.add('btn-disabled');
-      if(out) out.textContent = '';
-      showOverlay();
-      if(titleEl) titleEl.textContent = 'Verbindungstest läuft…';
-      if(txt) txt.textContent = 'Starte…';
-      setProgress(0, 30);
-
-      try{
-        const r = await fetch('/wifi/ping/start', {method:'POST', cache:'no-store'});
-        const j = await r.json().catch(()=>({ok:false,msg:'Ungültige Antwort'}));
-
-        if(!j.ok){
-          hideOverlay();
-          if(out) out.textContent = j.msg || 'Ping konnte nicht gestartet werden.';
-          btn.classList.remove('btn-disabled');
-          return;
-        }
-
-        const jobId = j.job_id;
-        const total = 30;
-        let tries = 0;
-
-        const timer = setInterval(async ()=>{
-          tries += 1;
-          try{
-            const rs = await fetch('/wifi/ping/status/' + jobId, {cache:'no-store'});
-            const s = await rs.json().catch(()=>({ok:false,msg:'Ungültige Antwort'}));
-
-            if(!s.ok){
-              clearInterval(timer);
-              hideOverlay();
-              if(out) out.textContent = s.msg || 'Fehler beim Status.';
-              btn.classList.remove('btn-disabled');
-              return;
-            }
-
-            const prog = Number(s.progress||0);
-            const recv = Number(s.received||0);
-            if(txt) txt.textContent = `${prog} von ${total} Paketen… (empfangen: ${recv})`;
-            setProgress(prog, total);
-
-            if(s.done){
-              clearInterval(timer);
-
-              const sent = Number(s.count || total);
-              const rec = recv;
-              const q = classifyPingQuality(s, sent, rec);
-
-              let result = `${rec} von ${sent} Paketen wurden erfolgreich gesendet.`;
-              if(q.loss != null) result += ` · Paketverlust: ${q.loss}%`;
-              if(s.min_ms!=null && s.max_ms!=null && s.avg_ms!=null){
-                result += ` Schnellstes: ${s.min_ms} ms · Langsamstes: ${s.max_ms} ms · Durchschnitt: ${s.avg_ms} ms`;
-              }
-              if(s.error){
-                result += ` (Hinweis: ${s.error})`;
-              }
-
-              const via = (s && s.iface_label) ? (s.iface_label + "
-") : "";
-              if(out){
-                if(q && q.label){
-                  out.textContent = via + `Verbindungsqualität: ${q.label}
-` + result;
-                }else{
-                  out.textContent = via + result;
-                }
-              }
-
-              if(titleEl) titleEl.textContent = 'Verbindungstest abgeschlossen';
-              if(txt){
-                const label = q && q.label ? q.label : 'Unbekannt';
-                txt.textContent = `TEST erfolgreich durchgeführt. Ergebnis: ${label}`;
-              }
-              setProgress(total, total);
-
-              setTimeout(()=>{ hideOverlay(); }, 3500);
-              btn.classList.remove('btn-disabled');
-            }
-          }catch(e){
-            if(tries > 120){
-              clearInterval(timer);
-              hideOverlay();
-              if(out) out.textContent = 'Verbindungstest abgebrochen (Timeout).';
-              btn.classList.remove('btn-disabled');
-            }
-          }
-        }, 600);
-
-      }catch(e){
-        hideOverlay();
-        if(out) out.textContent = 'Verbindungstest fehlgeschlagen.';
-        btn.classList.remove('btn-disabled');
-      }
-    }
-
-    // Overlay schließen (ESC oder Klick auf dunklen Bereich)
-    if(overlay){
-      overlay.addEventListener('click', (ev)=>{
-        if(ev && ev.target === overlay) hideOverlay();
-      });
-    }
-    document.addEventListener('keydown', (ev)=>{
-      if(ev && ev.key === 'Escape') hideOverlay();
-    });
-
-    if(btn){
-      // pingBtn ist ein Link (Fallback), also Navigation verhindern wenn JS aktiv ist
-      btn.addEventListener('click', (ev)=>{
-        try{ ev.preventDefault(); }catch(e){}
-        startPing();
-      });
-    }
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initPingUi);
-  }else{
-    initPingUi();
-  }
-})();
-</script>
-
-
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/autodarts_themes.js') }}?v=20260405"></script>
+  <script src="{{ url_for('static', filename='js/autodarts_display_modes.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/autodarts_tools_platforms.js') }}?v=20260406"></script>
+  <script src="{{ url_for('static', filename='js/caller_installer.js') }}?v=20260408"></script>
 </body>
 </html>

@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+
+# Copyright (c) 2026 Peter Rottmann
+# All rights reserved.
+# Proprietary and not open source.
+# No use, modification, distribution, publication, sublicensing,
+# or commercial use without prior express written permission.
+# Applies only to parts created by Peter Rottmann.
+# Third-party components remain under their respective licenses.
+# Provided "as is", without warranty.
+
 import os
 import json
 import re
@@ -10,11 +20,14 @@ import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 import urllib.request
 import urllib.error
-from pathlib import Path
+import tempfile
+import zipfile
+from pathlib import Path, PurePosixPath
 import time  # für weichen Dongle-Reset
 import uuid
 from datetime import datetime
 import threading
+import pwd
 
 from flask import (
     Flask,
@@ -28,7 +41,8 @@ from flask import (
     session,
     flash,
     Response,
-    stream_with_context,)
+    stream_with_context,
+    has_request_context,)
 
 
 app = Flask(__name__)
@@ -42,6 +56,11 @@ AUTODARTS_DATA_DIR = os.environ.get("AUTODARTS_DATA_DIR", "/home/peter/autodarts
 DATA_DIR = Path(AUTODARTS_DATA_DIR).resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 HELP_PDF_FILENAME = "Autodarts_install_manual.pdf"
+SIEMENS_STAR_DIR = Path("/usr/local/bin/static")
+SIEMENS_STAR_FILENAME = "siemens-star-a4.pdf"
+
+LANG_JSON_DIR = Path(BASE_DIR) / "static" / "lang"
+LANG_CONFIG_PATH = LANG_JSON_DIR / "config_lang.json"
 CAM_CONFIG_PATH = "/var/lib/autodarts/cam-config.json"
 CAMERA_MODE_SESSION = uuid.uuid4().hex
 
@@ -75,6 +94,7 @@ WIFI_INTERFACE = "wlan0"
 # Access-Point (Onboard-WLAN)
 AP_CONNECTION_NAME = "Autodarts-AP"
 AP_INTERFACE = "wlan_ap"
+AP_INTERNET_STATUS_PATH = "/var/lib/autodarts/ap-internet-status.json"
 
 # --- LED / darts-caller / darts-wled ---
 DARTS_CALLER_START_CUSTOM = "/var/lib/autodarts/extensions/darts-caller/start-custom.sh"
@@ -106,6 +126,22 @@ AUTODARTS_UPDATE_LOG = "/var/log/autodarts_update.log"
 AUTODARTS_UPDATE_STATE = "/var/lib/autodarts/autodarts-update-state.json"
 AUTODARTS_UPDATE_CHECK = "/var/lib/autodarts/autodarts-update-check.json"
 AUTOUPDATE_SERVICE = "autodartsupdater.service"
+AUTODARTS_THEME_DIR = Path(os.environ.get("AUTODARTS_THEME_DIR", "/usr/local/bin/theme"))
+AUTODARTS_THEME_STATE_PATH = Path(os.environ.get("AUTODARTS_THEME_STATE_PATH", "/var/lib/autodarts/autodarts-theme-state.json"))
+AUTODARTS_THEME_PANEL_URL = os.environ.get("AUTODARTS_THEME_PANEL_URL", "http://10.77.0.1")
+#AUTODARTS_THEME_STORE_URL = os.environ.get("AUTODARTS_THEME_STORE_URL", "").strip()
+AUTODARTS_THEME_STORE_URL = "https://chromewebstore.google.com/detail/autodarts-themes/chjcoefebpojnaihcjegalpfmlblgkcf?hl=de&utm_source=ext_sidebar"
+
+AUTODARTS_CALLER_ZIP_URL = os.environ.get("AUTODARTS_CALLER_ZIP_URL", "https://github.com/Jumbo125/Autodarts-Webinterface-Installation/releases/download/V1/Caller_Webpanel.zip").strip()
+AUTODARTS_CALLER_DIR_NAME = os.environ.get("AUTODARTS_CALLER_DIR_NAME", "Caller").strip() or "Caller"
+AUTODARTS_CALLER_WINDOWS_INSTALLER_FILENAME = "Windows_Caller_install.bat"
+AUTODARTS_CALLER_INSTALL_LOCK = threading.Lock()
+
+AUTODARTS_DISPLAY_SECTION_PI5_ONLY = str(os.environ.get("AUTODARTS_DISPLAY_SECTION_PI5_ONLY", "1")).strip().lower() not in {"0", "false", "no", "off"}
+AUTODARTS_DISPLAY_XRANDR = os.environ.get("AUTODARTS_DISPLAY_XRANDR", shutil.which("xrandr") or "xrandr")
+AUTODARTS_DISPLAY_USER = os.environ.get("AUTODARTS_DISPLAY_USER", "").strip()
+AUTODARTS_DISPLAY_PREFERRED_USERS = [x for x in [AUTODARTS_DISPLAY_USER, os.environ.get("SUDO_USER", "").strip(), "peter", "pi"] if x]
+
 
 # --- Autodarts Versionen (EINFACH pflegen) ---
 # Du änderst nur diese EINE Liste (Reihenfolge = Dropdown):
@@ -187,16 +223,16 @@ def build_autodarts_versions_dropdown() -> list[dict]:
     for x in AUTODARTS_VERSION_MENU:
         tok = _menu_token(str(x))
         if tok == "__LATEST__":
-            label = f"Aktuellste (online: {latest})" if latest else "Aktuellste (online: unbekannt)"
+            label = t("autodarts.latest_online", "Aktuellste (online: {latest})", latest=latest) if latest else t("autodarts.latest_online_unknown", "Aktuellste (online: unbekannt)")
             choices.append({"value": "__LATEST__", "label": label})
         elif tok == "__LAST__":
-            label = f"Zuletzt (Rollback: {last})" if last else "Zuletzt (Rollback: noch nicht verfügbar)"
+            label = t("autodarts.last_rollback", "Zuletzt (Rollback: {last})", last=last) if last else t("autodarts.last_rollback_unavailable", "Zuletzt (Rollback: noch nicht verfügbar)")
             choices.append({"value": "__LAST__", "label": label})
         else:
             if not _SEMVER_RE.match(tok):
                 continue
             if stable and tok == stable:
-                choices.append({"value": tok, "label": f"Stabil ({tok})"})
+                choices.append({"value": tok, "label": t("autodarts.stable_label", "Stabil ({version})", version=tok)})
             else:
                 choices.append({"value": tok, "label": tok})
 
@@ -258,7 +294,7 @@ WEBPANEL_VERSION_FILE = os.environ.get("WEBPANEL_VERSION_FILE", "/var/lib/autoda
 
 # Wenn du die Version lieber direkt im Script pflegen willst: hier eintragen.
 # Leer lassen ("") um wieder die Version aus WEBPANEL_VERSION_FILE / version.txt zu lesen.
-WEBPANEL_HARDCODED_VERSION = "1.48"
+WEBPANEL_HARDCODED_VERSION = "1.57"
 
 
 # Remote (GitHub Raw) – kann per ENV überschrieben werden
@@ -786,22 +822,22 @@ def interpret_nmcli_error(stdout: str, stderr: str):
     short = text.splitlines()[0] if text else ""
     lower = text.lower()
 
-    user_msg = "Verbindung konnte nicht hergestellt werden."
+    user_msg = t("wifi.connection_failed", "Verbindung konnte nicht hergestellt werden.")
 
     if "no device" in lower or "unknown device" in lower:
-        user_msg = "WLAN-USB-Stick wird nicht richtig erkannt."
+        user_msg = t("wifi.dongle_not_detected", "WLAN-USB-Stick wird nicht richtig erkannt.")
     elif "no wifi device" in lower:
-        user_msg = "Kein gültiges WLAN-Gerät gefunden (WLAN-Stick fehlt oder wird nicht richtig erkannt)."
+        user_msg = t("wifi.no_valid_device", "Kein gültiges WLAN-Gerät gefunden (WLAN-Stick fehlt oder wird nicht richtig erkannt).")
     elif "no network with ssid" in lower or "wifi network could not be found" in lower or "ssid not found" in lower:
-        user_msg = "Der eingegebene WLAN-Name (SSID) wurde nicht gefunden. Bitte Schreibweise und Abstand zum Router prüfen."
+        user_msg = t("wifi.ssid_not_found", "Der eingegebene WLAN-Name (SSID) wurde nicht gefunden. Bitte Schreibweise und Abstand zum Router prüfen.")
     elif "wrong password" in lower or "secrets were required, but not provided" in lower or "invalid passphrase" in lower:
-        user_msg = "Das WLAN-Passwort scheint nicht zu stimmen. Bitte erneut eingeben."
+        user_msg = t("wifi.password_invalid", "Das WLAN-Passwort scheint nicht zu stimmen. Bitte erneut eingeben.")
     elif "no suitable device found" in lower or "profile is not compatible with device" in lower:
-        user_msg = "Das WLAN-Profil passt nicht zum Gerät (z.B. falsches Interface wie eth0 statt WLAN-Stick)."
+        user_msg = t("wifi.profile_not_compatible", "Das WLAN-Profil passt nicht zum Gerät (z.B. falsches Interface wie eth0 statt WLAN-Stick).")
     elif "activation failed" in lower:
-        user_msg = "Der Router hat die Verbindung abgelehnt oder es gibt ein Problem mit den WLAN-Einstellungen."
+        user_msg = t("wifi.router_rejected", "Der Router hat die Verbindung abgelehnt oder es gibt ein Problem mit den WLAN-Einstellungen.")
 
-    debug_msg = f" (Details für Profis: {short})" if short else ""
+    debug_msg = t("wifi.debug_details", " (Details für Profis: {details})", details=short) if short else ""
     return user_msg + debug_msg
 
 
@@ -1649,7 +1685,7 @@ def start_autodarts_update_background(
     if pid:
         try:
             os.kill(int(pid), 0)
-            return False, "Update läuft bereits."
+            return False, t("autodarts.update_already_running", "Update läuft bereits.")
         except Exception:
             pass  # PID tot -> weiter
 
@@ -1713,7 +1749,7 @@ def start_autodarts_update_background(
         })
         return True, "Job gestartet."
     except Exception as e:
-        return False, f"Job konnte nicht gestartet werden: {e}"
+        return False, t("jobs.start_failed", "Job konnte nicht gestartet werden: {error}", error=e)
 
 def get_webpanel_version() -> str | None:
     """Liest die installierte Webpanel-Version (lokale version.txt)."""
@@ -1742,7 +1778,7 @@ def get_webpanel_version() -> str | None:
     return WEBPANEL_UI_FALLBACK_VERSION
 
 
-def fetch_latest_webpanel_version(timeout_s: float = 2.0) -> str | None:
+def fetch_latest_webpanel_version(timeout_s: float = 5.0) -> str | None:
     """Liest die aktuelle Webpanel-Version aus GitHub (raw version.txt)."""
     try:
         req = urllib.request.Request(WEBPANEL_VERSION_URL, headers={"User-Agent": "AutodartsPanel"})
@@ -1818,7 +1854,7 @@ def get_uvc_backup_info() -> dict:
 def start_webpanel_update_background(mode: str = "update", allow_self_update: bool = True) -> tuple[bool, str]:
     """Startet das Webpanel-Update oder UVC-Spezialjobs außerhalb des Service-CGroups."""
     if not os.path.exists(WEBPANEL_UPDATE_SCRIPT):
-        return False, f"Update-Script nicht gefunden: {WEBPANEL_UPDATE_SCRIPT}"
+        return False, t("webpanel.update_script_missing", "Update-Script nicht gefunden: {path}", path=WEBPANEL_UPDATE_SCRIPT)
 
     mode = (mode or "update").strip() or "update"
     lock_path = "/var/lib/autodarts/webpanel-update.lock"
@@ -1842,14 +1878,14 @@ def start_webpanel_update_background(mode: str = "update", allow_self_update: bo
             ts = int(info.get("ts") or 0)
 
             if unit and _unit_is_active(unit):
-                return False, "Webpanel-Job läuft bereits."
+                return False, t("webpanel.job_already_running", "Webpanel-Job läuft bereits.")
             if ts and (time.time() - ts) > 1800:
                 try:
                     os.remove(lock_path)
                 except Exception:
-                    return False, "Webpanel-Job läuft bereits (Lock konnte nicht entfernt werden)."
+                    return False, t("webpanel.job_already_running_lock", "Webpanel-Job läuft bereits (Lock konnte nicht entfernt werden).")
             else:
-                return False, "Webpanel-Job läuft bereits."
+                return False, t("webpanel.job_already_running", "Webpanel-Job läuft bereits.")
     except Exception:
         pass
 
@@ -1985,7 +2021,7 @@ def get_webpanel_version() -> str | None:
     return WEBPANEL_UI_FALLBACK_VERSION
 
 
-def fetch_latest_webpanel_version(timeout_s: float = 2.0) -> str | None:
+def fetch_latest_webpanel_version(timeout_s: float = 5.0) -> str | None:
     """Liest die aktuelle Webpanel-Version aus GitHub (raw version.txt)."""
     try:
         req = urllib.request.Request(WEBPANEL_VERSION_URL, headers={"User-Agent": "AutodartsPanel"})
@@ -2070,9 +2106,27 @@ def save_ufw_state(state: dict):
         pass
 
 
+UFW_BIN_CANDIDATES = (
+    "/usr/sbin/ufw",
+    "/sbin/ufw",
+    "/usr/bin/ufw",
+    "/bin/ufw",
+)
+
+
+def _get_ufw_cmd() -> str | None:
+    found = shutil.which("ufw")
+    if found:
+        return found
+    for candidate in UFW_BIN_CANDIDATES:
+        if os.path.exists(candidate):
+            return candidate
+    return None
+
+
 def ufw_is_installed() -> bool:
-    # sehr billig (kein Prozess): reicht um Install-Button sinnvoll anzuzeigen
-    return bool(shutil.which("ufw"))
+    # robust gegen fehlendes /usr/sbin im PATH des Webpanel-Services
+    return bool(_get_ufw_cmd())
 
 
 def _run_root(cmd: list[str], timeout: float = 20.0) -> subprocess.CompletedProcess:
@@ -2081,26 +2135,62 @@ def _run_root(cmd: list[str], timeout: float = 20.0) -> subprocess.CompletedProc
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
+def _systemd_unit_state(unit_name: str, timeout: float = 5.0) -> str:
+    unit_name = str(unit_name or "").strip()
+    if not unit_name:
+        return "missing"
+    try:
+        r = _run_root(["systemctl", "show", unit_name, "--property=ActiveState,LoadState", "--value"], timeout=timeout)
+        if r.returncode != 0:
+            return "missing"
+        values = [line.strip() for line in (r.stdout or "").splitlines() if line.strip()]
+        active = values[0] if len(values) > 0 else ""
+        load = values[1] if len(values) > 1 else ""
+        if load == "not-found":
+            return "missing"
+        if active in {"active", "activating", "reloading"}:
+            return "running"
+        if active in {"failed", "inactive", "deactivating"}:
+            return "finished"
+    except Exception:
+        pass
+    return "missing"
+
+
 def ufw_refresh_state() -> dict:
     """
-    Liest UFW Status (active/inactive) aus. Wird nur auf Button-Klick aufgerufen.
+    Liest UFW Status (active/inactive) aus. Wird auf Button-Klick und bei hängendem Install-Status genutzt.
     """
     st = load_ufw_state() or {}
     st["checked_ts"] = time.time()
     st["checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    st["installed"] = ufw_is_installed()
+
+    ufw_cmd = _get_ufw_cmd()
+    st["installed"] = bool(ufw_cmd)
 
     if not st["installed"]:
+        unit_state = _systemd_unit_state(st.get("unit") or "") if st.get("status") == "installing" else "missing"
         st["enabled"] = False
-        st["status"] = "not_installed"
-        st["raw"] = ""
+        if st.get("status") == "installing" and unit_state == "running":
+            st["status"] = "installing"
+        elif st.get("status") == "installing":
+            st["status"] = "install_failed"
+            tail = tail_file(UFW_LOG, n=50, max_chars=4000)
+            if tail:
+                st["raw"] = tail
+            if not st.get("error"):
+                st["error"] = t("ufw.install_not_completed", "UFW Installations-Job beendet, aber UFW wurde nicht gefunden. Bitte Log prüfen und erneut versuchen.")
+        else:
+            st["status"] = "not_installed"
+            st["raw"] = ""
         save_ufw_state(st)
         return st
 
     try:
-        r = _run_root(["ufw", "status"], timeout=6.0)
+        r = _run_root([ufw_cmd, "status"], timeout=6.0)
         raw = (r.stdout or "") + (("\n" + r.stderr) if r.stderr else "")
         st["raw"] = raw.strip()
+        st.pop("error", None)
         if "Status: active" in raw:
             st["enabled"] = True
             st["status"] = "active"
@@ -2124,14 +2214,15 @@ def ufw_apply_port_rules() -> tuple[bool, str]:
     """
     Setzt die erlaubten Ports idempotent (mehrfach ausführen ist ok).
     """
-    if not ufw_is_installed():
-        return False, "UFW ist nicht installiert."
+    ufw_cmd = _get_ufw_cmd()
+    if not ufw_cmd:
+        return False, t("ufw.not_installed", "UFW ist nicht installiert.")
 
     logs = []
     ok = True
     for rule in UFW_PORT_RULES:
         try:
-            r = _run_root(["ufw", "allow", rule], timeout=10.0)
+            r = _run_root([ufw_cmd, "allow", rule], timeout=10.0)
             if r.returncode != 0:
                 ok = False
             out = (r.stdout or "").strip()
@@ -2144,36 +2235,37 @@ def ufw_apply_port_rules() -> tuple[bool, str]:
             ok = False
             logs.append(str(e))
 
-    msg = "Ports angewendet." if ok else "Ports angewendet, aber es gab Fehler."
+    msg = t("ufw.ports_applied", "Ports angewendet.") if ok else t("ufw.ports_applied_with_errors", "Ports angewendet, aber es gab Fehler.")
     return ok, msg + ("\n" + "\n".join(logs[-10:]) if logs else "")
 
 
 def ufw_set_enabled(enable: bool) -> tuple[bool, str]:
-    if not ufw_is_installed():
-        return False, "UFW ist nicht installiert."
+    ufw_cmd = _get_ufw_cmd()
+    if not ufw_cmd:
+        return False, t("ufw.not_installed", "UFW ist nicht installiert.")
 
     if enable:
         ok_ports, msg_ports = ufw_apply_port_rules()
         try:
-            r = _run_root(["ufw", "--force", "enable"], timeout=10.0)
+            r = _run_root([ufw_cmd, "--force", "enable"], timeout=10.0)
             ok = (r.returncode == 0) and ok_ports
-            msg = "UFW aktiviert." if ok else "UFW Aktivierung fehlgeschlagen."
+            msg = t("ufw.enabled", "UFW aktiviert.") if ok else t("ufw.enable_failed", "UFW Aktivierung fehlgeschlagen.")
             extra = (r.stdout or "") + (("\n" + r.stderr) if r.stderr else "")
             extra = extra.strip()
             if msg_ports:
                 extra = (msg_ports + "\n" + extra).strip()
             return ok, (msg + ("\n" + extra if extra else ""))
         except Exception as e:
-            return False, f"UFW Aktivierung fehlgeschlagen: {e}"
+            return False, t("ufw.enable_failed_error", "UFW Aktivierung fehlgeschlagen: {error}", error=e)
     else:
         try:
-            r = _run_root(["ufw", "disable"], timeout=10.0)
+            r = _run_root([ufw_cmd, "disable"], timeout=10.0)
             ok = (r.returncode == 0)
             extra = (r.stdout or "") + (("\n" + r.stderr) if r.stderr else "")
             extra = extra.strip()
-            return ok, ("UFW deaktiviert." + ("\n" + extra if extra else ""))
+            return ok, (t("ufw.disabled", "UFW deaktiviert.") + ("\n" + extra if extra else ""))
         except Exception as e:
-            return False, f"UFW deaktivieren fehlgeschlagen: {e}"
+            return False, t("ufw.disable_failed_error", "UFW deaktivieren fehlgeschlagen: {error}", error=e)
 
 
 def start_ufw_install_background() -> tuple[bool, str]:
@@ -2190,15 +2282,16 @@ def start_ufw_install_background() -> tuple[bool, str]:
 
     rules = " ".join([f"ufw allow {r} || true;" for r in UFW_PORT_RULES])
     cmdline = (
+        "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH; "
         "set -e; "
         "echo '[ufw] apt-get update'; apt-get update -y; "
         "echo '[ufw] install'; apt-get install -y ufw; "
         f"echo '[ufw] rules'; {rules} "
         "echo '[ufw] enable'; ufw --force enable; "
-        "echo '[ufw] done'; ufw status;"
+        "echo '[ufw] done'; ufw status"
     )
     # Logfile
-    cmdline = f"{{ {cmdline} ; }} >> '{UFW_LOG}' 2>&1"
+    cmdline = f"{{ {cmdline}; }} >> '{UFW_LOG}' 2>&1"
 
     try:
         cmd = [
@@ -2213,7 +2306,7 @@ def start_ufw_install_background() -> tuple[bool, str]:
 
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode == 0:
-            return True, "UFW Installation gestartet (läuft im Hintergrund)."
+            return True, t("ufw.install_started", "UFW Installation gestartet (läuft im Hintergrund).")
         st["status"] = "install_failed"
         st["error"] = (res.stderr or res.stdout or "").strip() or "systemd-run fehlgeschlagen."
         save_ufw_state(st)
@@ -2264,13 +2357,13 @@ def start_os_update_background() -> tuple[bool, str]:
             state["unit"] = unit_name
             state["method"] = "systemd-run"
             save_os_update_state(state)
-            return True, "System-Update gestartet – der Pi rebootet danach automatisch."
+            return True, t("system.update_started", "System-Update gestartet – der Pi rebootet danach automatisch.")
 
         state["unit"] = None
         state["method"] = "systemd-run-failed"
         state["error"] = (res.stderr or res.stdout or "").strip()[:300]
         save_os_update_state(state)
-        return False, f"System-Update konnte nicht gestartet werden: {state['error']}"
+        return False, t("system.update_start_failed", "System-Update konnte nicht gestartet werden: {error}", error=state["error"])
 
     except Exception as e:
         state["unit"] = None
@@ -2307,20 +2400,20 @@ def autodarts_set_autoupdate(enabled: bool) -> tuple[bool, str]:
     """
     if not service_exists(AUTOUPDATE_SERVICE):
         if not enabled:
-            return True, "Auto-Update ist bereits deaktiviert (Service fehlt)."
-        return False, f"{AUTOUPDATE_SERVICE} nicht gefunden."
+            return True, t("autoupdate.already_disabled_missing_service", "Auto-Update ist bereits deaktiviert (Service fehlt).")
+        return False, t("autoupdate.service_missing", "{service} nicht gefunden.", service=AUTOUPDATE_SERVICE)
     try:
         cmd = ["systemctl", ("enable" if enabled else "disable"), "--now", AUTOUPDATE_SERVICE]
         if os.geteuid() != 0:
             cmd = ["sudo", "-n"] + cmd
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode == 0:
-            return True, ("Auto-Update aktiviert." if enabled else "Auto-Update deaktiviert.")
+            return True, (t("autoupdate.enabled", "Auto-Update aktiviert.") if enabled else t("autoupdate.disabled", "Auto-Update deaktiviert."))
         err = (r.stderr or r.stdout or "").strip()
         short = (err.splitlines()[0] if err else "systemctl fehlgeschlagen.")
         return False, short
     except Exception as e:
-        return False, f"Auto-Update konnte nicht geändert werden: {e}"
+        return False, t("autoupdate.change_failed", "Auto-Update konnte nicht geändert werden: {error}", error=e)
 
 
 
@@ -2684,10 +2777,7 @@ def start_extensions_update_background(target: str = "all") -> tuple[bool, str]:
     if not os.path.isfile(EXTENSIONS_UPDATE_SCRIPT):
         state["unit"] = None
         state["method"] = "missing-script"
-        state["error"] = (
-            f"{EXTENSIONS_UPDATE_SCRIPT} fehlt. "
-            "Bitte Webpanel-Update ausführen oder das Script manuell installieren."
-        )
+        state["error"] = t("extensions.update_script_missing", "{path} fehlt. Bitte Webpanel-Update ausführen oder das Script manuell installieren.", path=EXTENSIONS_UPDATE_SCRIPT)
         save_extensions_update_state(state)
         return False, state["error"]
 
@@ -2715,7 +2805,7 @@ def start_extensions_update_background(target: str = "all") -> tuple[bool, str]:
             state["unit"] = unit_name
             state["method"] = "systemd-run"
             save_extensions_update_state(state)
-            return True, "WLED UPDATE gestartet (Caller/WLED werden nur aktualisiert, wenn nötig)."
+            return True, t("extensions.update_started", "WLED UPDATE gestartet (Caller/WLED werden nur aktualisiert, wenn nötig).")
 
         state["unit"] = None
         state["method"] = "systemd-run-failed"
@@ -2757,20 +2847,20 @@ def autodarts_set_autoupdate(enabled: bool) -> tuple[bool, str]:
     """
     if not service_exists(AUTOUPDATE_SERVICE):
         if not enabled:
-            return True, "Auto-Update ist bereits deaktiviert (Service fehlt)."
-        return False, f"{AUTOUPDATE_SERVICE} nicht gefunden."
+            return True, t("autoupdate.already_disabled_missing_service", "Auto-Update ist bereits deaktiviert (Service fehlt).")
+        return False, t("autoupdate.service_missing", "{service} nicht gefunden.", service=AUTOUPDATE_SERVICE)
     try:
         cmd = ["systemctl", ("enable" if enabled else "disable"), "--now", AUTOUPDATE_SERVICE]
         if os.geteuid() != 0:
             cmd = ["sudo", "-n"] + cmd
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode == 0:
-            return True, ("Auto-Update aktiviert." if enabled else "Auto-Update deaktiviert.")
+            return True, (t("autoupdate.enabled", "Auto-Update aktiviert.") if enabled else t("autoupdate.disabled", "Auto-Update deaktiviert."))
         err = (r.stderr or r.stdout or "").strip()
         short = (err.splitlines()[0] if err else "systemctl fehlgeschlagen.")
         return False, short
     except Exception as e:
-        return False, f"Auto-Update konnte nicht geändert werden: {e}"
+        return False, t("autoupdate.change_failed", "Auto-Update konnte nicht geändert werden: {error}", error=e)
 
 # ---------------- Auto-Update Default (soll standardmäßig AUS sein) ----------------
 
@@ -2817,7 +2907,7 @@ def ensure_autoupdate_default_once() -> str | None:
             ok, _m = autodarts_set_autoupdate(False)
             changed = bool(ok)
             if changed:
-                msg = "Auto-Update wurde standardmäßig deaktiviert (kann bei Bedarf wieder eingeschaltet werden)."
+                msg = t("autoupdate.default_disabled", "Auto-Update wurde standardmäßig deaktiviert (kann bei Bedarf wieder eingeschaltet werden).")
 
     # Marker schreiben (damit es wirklich nur einmal passiert)
     # Wenn wir deaktivieren wollten, das aber fehlschlägt, schreiben wir keinen Marker,
@@ -2949,10 +3039,10 @@ def get_default_gateway_for_interface(iface: str) -> str | None:
 
 def ping_iface_label(iface: str) -> str:
     if iface == "eth0":
-        return "Verbindungstest über Kabel (eth0)"
+        return t("ping.label_eth0", "Verbindungstest über Kabel (eth0)")
     if iface == WIFI_INTERFACE:
-        return f"Verbindungstest über WLAN ({iface})"
-    return f"Verbindungstest über {iface}"
+        return t("ping.label_wifi", "Verbindungstest über WLAN ({iface})", iface=iface)
+    return t("ping.label_generic", "Verbindungstest über {iface}", iface=iface)
 
 def _ping_worker(job_id: str, target: str, count: int):
     job = PING_JOBS.get(job_id)
@@ -2996,11 +3086,11 @@ def _ping_worker(job_id: str, target: str, count: int):
 def start_ping_test(count: int = 30) -> tuple[bool, str, str | None]:
     iface = get_ping_uplink_interface()
     if not iface:
-        return False, "Kein Gateway gefunden (nur Access Point oder nicht verbunden?).", None
+        return False, t("ping.no_gateway_found", "Kein Gateway gefunden (nur Access Point oder nicht verbunden?)."), None
 
     gw = get_default_gateway_for_interface(iface)
     if not gw:
-        return False, f"Kein Gateway auf {iface} gefunden (nicht verbunden?).", None
+        return False, t("ping.no_gateway_on_iface", "Kein Gateway auf {iface} gefunden (nicht verbunden?).", iface=iface), None
 
     job_id = uuid.uuid4().hex[:10]
     PING_JOBS[job_id] = {
@@ -3249,13 +3339,13 @@ def update_darts_wled_start_custom_weps(hosts: list[str]) -> tuple[bool, str]:
     Mapping/Presets bleiben unberührt.
     """
     if not os.path.exists(DARTS_WLED_START_CUSTOM):
-        return False, f"start-custom.sh nicht gefunden: {DARTS_WLED_START_CUSTOM}"
+        return False, t("wled.start_custom_missing", "start-custom.sh nicht gefunden: {path}", path=DARTS_WLED_START_CUSTOM)
 
     try:
         with open(DARTS_WLED_START_CUSTOM, "r", encoding="utf-8") as f:
             lines = f.readlines()
     except Exception as e:
-        return False, f"start-custom.sh konnte nicht gelesen werden: {e}"
+        return False, t("wled.start_custom_read_failed", "start-custom.sh konnte nicht gelesen werden: {error}", error=e)
 
     new_lines = []
     replaced = False
@@ -3274,7 +3364,7 @@ def update_darts_wled_start_custom_weps(hosts: list[str]) -> tuple[bool, str]:
             new_lines.append(line)
 
     if not replaced:
-        return False, "Keine -WEPS Zeile in start-custom.sh gefunden (unerwartetes Format)."
+        return False, t("wled.weps_line_missing_unexpected", "Keine -WEPS Zeile in start-custom.sh gefunden (unerwartetes Format).")
 
     # Backup einmalig
     try:
@@ -3289,7 +3379,7 @@ def update_darts_wled_start_custom_weps(hosts: list[str]) -> tuple[bool, str]:
         with open(DARTS_WLED_START_CUSTOM, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
     except Exception as e:
-        return False, f"start-custom.sh konnte nicht geschrieben werden: {e}"
+        return False, t("wled.start_custom_write_failed", "start-custom.sh konnte nicht geschrieben werden: {error}", error=e)
 
     return True, "start-custom.sh (-WEPS) aktualisiert."
 
@@ -3364,6 +3454,47 @@ def _wled_presets_block_end(lines: list[str], start_idx: int) -> int:
     return idx
 
 
+def _wled_presets_int(value, default: int, min_val: int = 0, max_val: int = 999) -> int:
+    try:
+        num = int(str(value).strip())
+    except Exception:
+        num = default
+    return max(min_val, min(max_val, num))
+
+
+def _wled_presets_sort_key(row: dict) -> tuple[int, str]:
+    preset = _wled_presets_int((row or {}).get("preset"), 0, 0, 999)
+    arg = str((row or {}).get("arg") or "")
+    return (preset if preset > 0 else 10**9, arg)
+
+
+def _wled_presets_prepare_rows(rows_payload) -> list[dict]:
+    rows_in = rows_payload if isinstance(rows_payload, list) else []
+    normalized = [_wled_presets_normalize_row(r if isinstance(r, dict) else {}) for r in rows_in]
+
+    used: set[int] = set()
+    missing: list[dict] = []
+    for row in normalized:
+        preset = _wled_presets_int(row.get("preset"), 0, 0, 999)
+        if preset >= 1 and preset not in used:
+            row["preset"] = preset
+            used.add(preset)
+        else:
+            row["preset"] = 0
+            missing.append(row)
+
+    next_preset = 1
+    for row in missing:
+        while next_preset in used:
+            next_preset += 1
+        row["preset"] = next_preset
+        used.add(next_preset)
+        next_preset += 1
+
+    normalized.sort(key=_wled_presets_sort_key)
+    return normalized
+
+
 def _wled_presets_row_from_line(line: str) -> dict | None:
     cleaned = _wled_presets_strip_line(line)
     if not cleaned or cleaned.startswith("#"):
@@ -3372,6 +3503,7 @@ def _wled_presets_row_from_line(line: str) -> dict | None:
     m = re.match(r'^(-A\d+)\s+(\d+)-(\d+)\s+"ps\|(\d+)(?:\|([^\"]+))?"$', cleaned)
     if m:
         return {
+            "preset": int(m.group(4)),
             "kind": "score_range",
             "typeId": "score_range",
             "label": "Score-Bereich / Score range",
@@ -3386,9 +3518,11 @@ def _wled_presets_row_from_line(line: str) -> dict | None:
     m = re.match(r'^(-S(\d+))\s+"ps\|(\d+)(?:\|([^\"]+))?"$', cleaned)
     if m:
         score_val = int(m.group(2))
+        preset = int(m.group(3))
         if score_val == 0:
             meta = WLED_PRESET_FIXED_TYPES["-S0"]
             return {
+                "preset": preset,
                 "kind": "fixed",
                 "typeId": meta["typeId"],
                 "label": meta["label"],
@@ -3400,6 +3534,7 @@ def _wled_presets_row_from_line(line: str) -> dict | None:
                 "to": 60,
             }
         return {
+            "preset": preset,
             "kind": "score_exact",
             "typeId": "score_exact",
             "label": "Exakter Score / Exact score",
@@ -3414,10 +3549,12 @@ def _wled_presets_row_from_line(line: str) -> dict | None:
     m = re.match(r'^(-[A-Z0-9]+)\s+"ps\|(\d+)(?:\|([^\"]+))?"$', cleaned)
     if m:
         arg = m.group(1)
+        preset = int(m.group(2))
         sec = (m.group(3) or "").strip()
         meta = WLED_PRESET_FIXED_TYPES.get(arg)
         if meta:
             return {
+                "preset": preset,
                 "kind": "fixed",
                 "typeId": meta["typeId"],
                 "label": meta["label"],
@@ -3429,6 +3566,7 @@ def _wled_presets_row_from_line(line: str) -> dict | None:
                 "to": 60,
             }
         return {
+            "preset": preset,
             "kind": "unknown",
             "typeId": "unknown",
             "label": f"Unbekannt / {arg}",
@@ -3441,6 +3579,7 @@ def _wled_presets_row_from_line(line: str) -> dict | None:
         }
 
     return {
+        "preset": 0,
         "kind": "unknown",
         "typeId": "unknown",
         "label": f"Unbekannt / {cleaned}",
@@ -3456,16 +3595,16 @@ def _wled_presets_row_from_line(line: str) -> dict | None:
 
 def load_wled_presets_state() -> tuple[bool, str, list[dict], str]:
     if not os.path.exists(DARTS_WLED_START_CUSTOM):
-        return False, f"start-custom.sh nicht gefunden: {DARTS_WLED_START_CUSTOM}", [], _wled_presets_default_weps_text()
+        return False, t("wled.start_custom_missing", "start-custom.sh nicht gefunden: {path}", path=DARTS_WLED_START_CUSTOM), [], _wled_presets_default_weps_text()
 
     try:
         lines = _wled_presets_read_file()
     except Exception as e:
-        return False, f"start-custom.sh konnte nicht gelesen werden: {e}", [], _wled_presets_default_weps_text()
+        return False, t("wled.start_custom_read_failed", "start-custom.sh konnte nicht gelesen werden: {error}", error=e), [], _wled_presets_default_weps_text()
 
     weps_idx = _wled_presets_find_weps_index(lines)
     if weps_idx < 0:
-        return False, "Keine -WEPS Zeile gefunden.", [], _wled_presets_default_weps_text()
+        return False, t("wled.weps_line_missing", "Keine -WEPS Zeile gefunden."), [], _wled_presets_default_weps_text()
 
     weps_text = _wled_presets_extract_weps_text(lines, weps_idx)
     block_end = _wled_presets_block_end(lines, weps_idx + 1)
@@ -3475,18 +3614,12 @@ def load_wled_presets_state() -> tuple[bool, str, list[dict], str]:
         if row:
             rows.append(row)
 
+    rows = _wled_presets_prepare_rows(rows)
     return True, "Aktuelle Einstellungen geladen.", rows, weps_text
 
 
-def _wled_presets_int(value, default: int, min_val: int = 0, max_val: int = 999) -> int:
-    try:
-        num = int(str(value).strip())
-    except Exception:
-        num = default
-    return max(min_val, min(max_val, num))
-
-
 def _wled_presets_normalize_row(row: dict) -> dict:
+    preset = _wled_presets_int((row or {}).get("preset"), 0, 0, 999)
     kind = str((row or {}).get("kind") or "fixed").strip()
     type_id = str((row or {}).get("typeId") or "").strip()
     arg = str((row or {}).get("arg") or "").strip()
@@ -3496,6 +3629,7 @@ def _wled_presets_normalize_row(row: dict) -> dict:
     if kind == "score_exact":
         score = _wled_presets_int((row or {}).get("score"), 180, 0, 180)
         return {
+            "preset": preset,
             "kind": "score_exact",
             "typeId": "score_exact",
             "label": label or "Exakter Score / Exact score",
@@ -3511,6 +3645,7 @@ def _wled_presets_normalize_row(row: dict) -> dict:
         from_val = _wled_presets_int((row or {}).get("from"), 0, 0, 180)
         to_val = _wled_presets_int((row or {}).get("to"), 60, 0, 180)
         return {
+            "preset": preset,
             "kind": "score_range",
             "typeId": "score_range",
             "label": label or "Score-Bereich / Score range",
@@ -3524,6 +3659,7 @@ def _wled_presets_normalize_row(row: dict) -> dict:
 
     if kind == "unknown":
         return {
+            "preset": preset,
             "kind": "unknown",
             "typeId": "unknown",
             "label": label or (f"Unbekannt / {arg}" if arg else "Unbekannt"),
@@ -3546,6 +3682,7 @@ def _wled_presets_normalize_row(row: dict) -> dict:
         meta = {"typeId": type_id or "fixed", "label": label or arg or "Eintrag", "duration": bool(seconds)}
 
     return {
+        "preset": preset,
         "kind": "fixed",
         "typeId": meta.get("typeId") or type_id or "fixed",
         "label": label or meta.get("label") or arg or "Eintrag",
@@ -3581,29 +3718,31 @@ def _wled_presets_line_for_row(row: dict, preset_index: int, area_index: int | N
 
 def save_wled_presets_state(rows_payload) -> tuple[bool, str, list[dict], str]:
     if not os.path.exists(DARTS_WLED_START_CUSTOM):
-        return False, f"start-custom.sh nicht gefunden: {DARTS_WLED_START_CUSTOM}", [], _wled_presets_default_weps_text()
+        return False, t("wled.start_custom_missing", "start-custom.sh nicht gefunden: {path}", path=DARTS_WLED_START_CUSTOM), [], _wled_presets_default_weps_text()
 
     try:
         lines = _wled_presets_read_file()
     except Exception as e:
-        return False, f"start-custom.sh konnte nicht gelesen werden: {e}", [], _wled_presets_default_weps_text()
+        return False, t("wled.start_custom_read_failed", "start-custom.sh konnte nicht gelesen werden: {error}", error=e), [], _wled_presets_default_weps_text()
 
     weps_idx = _wled_presets_find_weps_index(lines)
     if weps_idx < 0:
-        return False, "Keine -WEPS Zeile gefunden.", [], _wled_presets_default_weps_text()
+        return False, t("wled.weps_line_missing", "Keine -WEPS Zeile gefunden."), [], _wled_presets_default_weps_text()
 
     weps_text = _wled_presets_extract_weps_text(lines, weps_idx)
-    rows_in = rows_payload if isinstance(rows_payload, list) else []
-    rows = [_wled_presets_normalize_row(r if isinstance(r, dict) else {}) for r in rows_in]
+    rows = _wled_presets_prepare_rows(rows_payload)
 
     area_counter = 0
     rendered_lines: list[str] = []
-    for idx, row in enumerate(rows, start=1):
+    for row in rows:
         area_idx = None
         if row.get("kind") == "score_range":
             area_counter += 1
             area_idx = area_counter
-        rendered_lines.append(_wled_presets_line_for_row(row, idx, area_idx))
+        preset_number = _wled_presets_int(row.get("preset"), 0, 0, 999)
+        if preset_number < 1:
+            continue
+        rendered_lines.append(_wled_presets_line_for_row(row, preset_number, area_idx))
 
     block_end = _wled_presets_block_end(lines, weps_idx + 1)
     prefix = list(lines[:weps_idx + 1])
@@ -3641,7 +3780,7 @@ def save_wled_presets_state(rows_payload) -> tuple[bool, str, list[dict], str]:
         with open(DARTS_WLED_START_CUSTOM, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
     except Exception as e:
-        return False, f"start-custom.sh konnte nicht geschrieben werden: {e}", rows, weps_text
+        return False, t("wled.start_custom_write_failed", "start-custom.sh konnte nicht geschrieben werden: {error}", error=e), rows, weps_text
 
     restarted = False
     try:
@@ -3651,7 +3790,7 @@ def save_wled_presets_state(rows_payload) -> tuple[bool, str, list[dict], str]:
     except Exception:
         restarted = False
 
-    msg = "Preset-Einstellungen gespeichert."
+    msg = t("wled.presets_saved", "Preset-Einstellungen gespeichert.")
     if restarted:
         msg += " darts-wled.service wurde neu gestartet."
     return True, msg, rows, weps_text
@@ -3782,7 +3921,7 @@ def _read_pi_monitor_state() -> dict:
 def get_pi_monitor_status() -> dict:
     st = _read_pi_monitor_state()
     if not st.get("running"):
-        return {"running": False, "msg": "Nicht aktiv."}
+        return {"running": False, "msg": t("pi_monitor.not_active", "Nicht aktiv.")}
 
     # menschenlesbare Infos
     try:
@@ -3795,7 +3934,7 @@ def get_pi_monitor_status() -> dict:
         ends = ""
     return {
         "running": True,
-        "msg": f"Läuft (PID {st.get('pid')}). Start: {started} · Ende: {ends}",
+        "msg": t("pi_monitor.running_status", "Läuft (PID {pid}). Start: {started} · Ende: {ends}", pid=st.get("pid"), started=started, ends=ends),
         **st,
     }
 
@@ -3804,15 +3943,15 @@ def start_pi_monitor(interval_s: int, duration_min: int) -> dict:
     # Guard: nicht mehrfach starten
     st = _read_pi_monitor_state()
     if st.get("running"):
-        return {"ok": False, "running": True, "msg": "Pi Monitor läuft bereits – bitte warten bis er fertig ist."}
+        return {"ok": False, "running": True, "msg": t("pi_monitor.already_running", "Pi Monitor läuft bereits – bitte warten bis er fertig ist.")}
 
     if interval_s < 1 or interval_s > 3600:
-        return {"ok": False, "running": False, "msg": "Intervall ungültig."}
+        return {"ok": False, "running": False, "msg": t("pi_monitor.invalid_interval", "Intervall ungültig.")}
     if duration_min < 1 or duration_min > 24 * 60:
-        return {"ok": False, "running": False, "msg": "Dauer ungültig."}
+        return {"ok": False, "running": False, "msg": t("pi_monitor.invalid_duration", "Dauer ungültig.")}
 
     if not os.path.exists(PI_MONITOR_SCRIPT):
-        return {"ok": False, "running": False, "msg": f"Script nicht gefunden: {PI_MONITOR_SCRIPT}"}
+        return {"ok": False, "running": False, "msg": t("pi_monitor.script_missing", "Script nicht gefunden: {path}", path=PI_MONITOR_SCRIPT)}
 
     # Command bauen (wenn nicht root → sudo -n, damit es nicht hängen kann)
     cmd = [PI_MONITOR_SCRIPT, str(interval_s), str(duration_min)]
@@ -3837,7 +3976,7 @@ def start_pi_monitor(interval_s: int, duration_min: int) -> dict:
             out.close()
         except Exception:
             pass
-        return {"ok": False, "running": False, "msg": f"Start fehlgeschlagen: {e}"}
+        return {"ok": False, "running": False, "msg": t("generic.start_failed", "Start fehlgeschlagen: {error}", error=e)}
 
     now = time.time()
     ends = now + (duration_min * 60)
@@ -3855,7 +3994,7 @@ def start_pi_monitor(interval_s: int, duration_min: int) -> dict:
     except Exception:
         pass
 
-    return {"ok": True, "running": True, "msg": "Pi Monitor gestartet.", **get_pi_monitor_status()}
+    return {"ok": True, "running": True, "msg": t("pi_monitor.started", "Pi Monitor gestartet."), **get_pi_monitor_status()}
 
 
 def stop_pi_monitor() -> dict:
@@ -3866,8 +4005,8 @@ def stop_pi_monitor() -> dict:
     try:
         os.kill(int(pid), 15)  # SIGTERM
     except Exception as e:
-        return {"ok": False, "running": True, "msg": f"Konnte nicht stoppen: {e}"}
-    return {"ok": True, "running": False, "msg": "Stop gesendet."}
+        return {"ok": False, "running": True, "msg": t("generic.stop_failed", "Konnte nicht stoppen: {error}", error=e)}
+    return {"ok": True, "running": False, "msg": t("generic.stop_sent", "Stop gesendet.")}
 
 def _read_var_from_line(line: str) -> str:
     if "=" not in line:
@@ -3898,7 +4037,7 @@ def read_darts_caller_credentials():
         with open(DARTS_CALLER_START_CUSTOM, "r", encoding="utf-8") as f:
             lines = f.readlines()
     except Exception as e:
-        return email, password, board_id, True, f"Fehler beim Lesen von start-custom.sh: {e}"
+        return email, password, board_id, True, t("caller.read_start_custom_failed", "Fehler beim Lesen von start-custom.sh: {error}", error=e)
 
     for line in lines:
         s = line.strip()
@@ -3937,7 +4076,7 @@ def write_darts_caller_credentials_strict(path, email, password, board_id):
     ok3 = _set_var_line(lines, "autodarts_board_id", board_id) if board_id is not None else True
 
     if not (ok1 and ok2 and ok3):
-        raise RuntimeError("start-custom.sh: benötigte Variablenzeilen nicht gefunden – es wurde NICHT geschrieben.")
+        raise RuntimeError(t("caller.required_lines_missing", "start-custom.sh: benötigte Variablenzeilen nicht gefunden – es wurde NICHT geschrieben."))
 
     with open(path, "w", encoding="utf-8") as f:
         f.writelines(lines)
@@ -3954,21 +4093,1386 @@ def write_darts_caller_credentials(email, password, board_id):
 
 # ---------------- ROUTES ----------------
 
+def _normalize_lang_code(code: str) -> str:
+    code = str(code or "").strip().lower().replace(" ", "")
+    code = code.replace("-", "_")
+    code = re.sub(r"[^a-z0-9_]", "", code)
+    return code
+
+
+def _iter_all_lang_paths():
+    try:
+        if not LANG_JSON_DIR.exists() or not LANG_JSON_DIR.is_dir():
+            return
+    except Exception:
+        return
+
+    seen: set[str] = set()
+    try:
+        for candidate in sorted(LANG_JSON_DIR.glob("lang_*.json")):
+            try:
+                if not candidate.is_file():
+                    continue
+            except Exception:
+                continue
+
+            candidate_key = str(candidate.resolve())
+            if candidate_key in seen:
+                continue
+            seen.add(candidate_key)
+            yield candidate
+    except Exception:
+        return
+
+
+def _find_lang_path_by_code(code: str):
+    normalized = _normalize_lang_code(code)
+    if not normalized:
+        return None, normalized
+
+    for path in _iter_all_lang_paths() or []:
+        stem = path.stem
+        suffix = stem[5:] if stem.startswith("lang_") else ""
+        suffix = _normalize_lang_code(suffix)
+        if suffix == normalized:
+            return path, normalized
+
+    return None, normalized
+
+
+def _default_flag_for_lang(code: str) -> str:
+    normalized = _normalize_lang_code(code)
+    if not normalized:
+        return "xx"
+
+    parts = [p for p in normalized.replace("-", "_").split("_") if p]
+    lang = parts[0] if parts else normalized
+    region = parts[1] if len(parts) > 1 else ""
+
+    if region:
+        return region.lower()
+
+    lang_to_flag = {
+        "ar": "sa",
+        "bg": "bg",
+        "cs": "cz",
+        "da": "dk",
+        "de": "de",
+        "el": "gr",
+        "en": "gb",
+        "es": "es",
+        "et": "ee",
+        "fi": "fi",
+        "fr": "fr",
+        "ga": "ie",
+        "he": "il",
+        "hi": "in",
+        "hr": "hr",
+        "hu": "hu",
+        "id": "id",
+        "it": "it",
+        "ja": "jp",
+        "ko": "kr",
+        "lt": "lt",
+        "lv": "lv",
+        "ms": "my",
+        "mt": "mt",
+        "nl": "nl",
+        "no": "no",
+        "pl": "pl",
+        "pt": "pt",
+        "ro": "ro",
+        "ru": "ru",
+        "sk": "sk",
+        "sl": "si",
+        "sr": "rs",
+        "sv": "se",
+        "th": "th",
+        "tr": "tr",
+        "uk": "ua",
+        "vi": "vn",
+        "zh": "cn",
+    }
+    return lang_to_flag.get(lang, lang[:2] or "xx")
+
+
+def _normalize_lang_payload(data, fallback_code: str):
+    if isinstance(data, dict):
+        payload = dict(data)
+    else:
+        payload = {"placeholder": {}, "items": data}
+
+    config = payload.get("config")
+    if not isinstance(config, dict):
+        config = {}
+    else:
+        config = dict(config)
+
+    placeholder = payload.get("placeholder")
+    if not isinstance(placeholder, dict):
+        placeholder = {}
+
+    abk = _normalize_lang_code(config.get("abk") or fallback_code)
+    if not abk:
+        abk = fallback_code
+
+    flag = str(config.get("flag") or "").strip().lower()
+    flag = re.sub(r"[^a-z0-9_-]", "", flag)
+    if not flag:
+        flag = _default_flag_for_lang(abk)
+
+    config["abk"] = abk
+    config["flag"] = flag
+    config.pop("default", None)
+
+    payload["config"] = config
+    payload["placeholder"] = placeholder
+    return payload
+
+
+def _read_lang_default_config() -> tuple[str | None, str | None]:
+    try:
+        if not LANG_CONFIG_PATH.exists():
+            return None, None
+
+        raw = LANG_CONFIG_PATH.read_text(encoding="utf-8")
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            return None, "config_lang.json muss ein JSON-Objekt enthalten."
+
+        code = _normalize_lang_code(data.get("default"))
+        if not code:
+            return None, None
+        return code, None
+    except json.JSONDecodeError as e:
+        return None, f"config_lang.json ist ungültig: {e}"
+    except Exception as e:
+        return None, f"config_lang.json konnte nicht gelesen werden: {e}"
+
+
+def _write_lang_default_config(code: str) -> tuple[bool, str | None]:
+    normalized = _normalize_lang_code(code)
+    if not normalized:
+        return False, "Ungültiger Sprachcode."
+
+    try:
+        LANG_JSON_DIR.mkdir(parents=True, exist_ok=True)
+        LANG_CONFIG_PATH.write_text(
+            json.dumps({"default": normalized}, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return True, None
+    except Exception as e:
+        return False, f"config_lang.json konnte nicht geschrieben werden: {e}"
+
+
+def _resolve_default_lang_code(languages: dict[str, dict]) -> tuple[str | None, str | None]:
+    configured, err = _read_lang_default_config()
+    if configured and configured in languages:
+        return configured, err
+
+    if configured and configured not in languages:
+        err = f"Default-Sprache '{configured}' aus config_lang.json wurde nicht gefunden."
+
+    fallback = next(iter(languages.keys()), None)
+    return fallback, err
+
+
+def _load_lang_json(code: str) -> tuple[dict | None, str | None, str | None, str]:
+    path, normalized = _find_lang_path_by_code(code)
+    if not normalized:
+        return None, None, "Ungültiger Sprachcode.", normalized
+    if path is None:
+        return None, None, f"Sprachdatei lang_{normalized}.json nicht gefunden in {LANG_JSON_DIR}.", normalized
+
+    try:
+        raw = path.read_text(encoding="utf-8")
+        data = json.loads(raw)
+        if not isinstance(data, (dict, list)):
+            return None, str(path), "Sprachdatei muss ein JSON-Objekt oder Array enthalten.", normalized
+        payload = _normalize_lang_payload(data, normalized)
+        return payload, str(path), None, normalized
+    except json.JSONDecodeError as e:
+        return None, str(path), f"JSON ungültig: {e}", normalized
+    except Exception as e:
+        return None, str(path), f"Datei konnte nicht gelesen werden: {e}", normalized
+
+
+def _load_all_lang_jsons() -> tuple[dict, list[dict], str | None]:
+    languages: dict[str, dict] = {}
+    sources: list[dict] = []
+
+    try:
+        if not LANG_JSON_DIR.exists() or not LANG_JSON_DIR.is_dir():
+            return {}, [], f"Sprachordner nicht gefunden: {LANG_JSON_DIR}"
+    except Exception as e:
+        return {}, [], f"Sprachordner konnte nicht gelesen werden: {e}"
+
+    paths = list(_iter_all_lang_paths() or [])
+    if not paths:
+        return {}, [], f"Keine Sprachdateien in {LANG_JSON_DIR} gefunden."
+
+    for path in paths:
+        stem = path.stem
+        suffix = stem[5:] if stem.startswith("lang_") else ""
+        suffix = _normalize_lang_code(suffix)
+        try:
+            raw = path.read_text(encoding="utf-8")
+            data = json.loads(raw)
+            if not isinstance(data, (dict, list)):
+                sources.append({
+                    "file": str(path),
+                    "code": suffix,
+                    "ok": False,
+                    "msg": "Sprachdatei muss ein JSON-Objekt oder Array enthalten.",
+                })
+                continue
+
+            payload = _normalize_lang_payload(data, suffix)
+            code = _normalize_lang_code(payload.get("config", {}).get("abk") or suffix)
+            if not code:
+                code = suffix
+            payload["config"]["abk"] = code
+            languages[code] = payload
+            sources.append({"file": str(path), "code": code, "ok": True})
+        except json.JSONDecodeError as e:
+            sources.append({"file": str(path), "code": suffix, "ok": False, "msg": f"JSON ungültig: {e}"})
+        except Exception as e:
+            sources.append({"file": str(path), "code": suffix, "ok": False, "msg": f"Datei konnte nicht gelesen werden: {e}"})
+
+    if not languages:
+        return {}, sources, "Keine gültigen Sprachdateien gefunden."
+
+    return languages, sources, None
+
+
+
+def _get_current_lang_code() -> str:
+    code = session.get("lang") or request.args.get("lang") or ""
+    code = _normalize_lang_code(code)
+
+    languages, _, _ = _load_all_lang_jsons()
+    default_code, _ = _resolve_default_lang_code(languages)
+
+    if code and code in languages:
+        return code
+    if default_code and default_code in languages:
+        return default_code
+    return "de"
+
+
+
+
+
+def get_pi_model_name() -> str:
+    for path in ("/proc/device-tree/model", "/sys/firmware/devicetree/base/model"):
+        try:
+            raw = Path(path).read_bytes()
+            model = raw.decode("utf-8", "ignore").replace("\x00", "").strip()
+            if model:
+                return model
+        except Exception:
+            continue
+    return "unknown"
+
+
+def is_pi5_model(model: str | None = None) -> bool:
+    model = (model or get_pi_model_name()).strip()
+    return "Raspberry Pi 5" in model
+
+
+def _display_user_exists(username: str | None) -> bool:
+    username = (username or "").strip()
+    if not username:
+        return False
+    try:
+        pwd.getpwnam(username)
+        return True
+    except KeyError:
+        return False
+    except Exception:
+        return False
+
+
+def _display_user_candidates() -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+
+    def add(username: str | None):
+        username = (username or "").strip()
+        if not username or username in seen:
+            return
+        if _display_user_exists(username):
+            seen.add(username)
+            out.append(username)
+
+    for candidate in AUTODARTS_DISPLAY_PREFERRED_USERS:
+        add(candidate)
+
+    try:
+        current_user = pwd.getpwuid(os.geteuid()).pw_name
+    except Exception:
+        current_user = ""
+    add(current_user)
+
+    try:
+        home_root = Path("/home")
+        if home_root.exists():
+            for p in sorted(home_root.iterdir()):
+                if p.is_dir():
+                    add(p.name)
+    except Exception:
+        pass
+
+    try:
+        proc = subprocess.run(
+            ["ps", "-eo", "user=,args="],
+            capture_output=True,
+            text=True,
+            timeout=1.8,
+        )
+        for line in (proc.stdout or "").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(None, 1)
+            if len(parts) != 2:
+                continue
+            user, args = parts[0].strip(), parts[1].strip()
+            if not user or user == "root":
+                continue
+            if any(token in args for token in ("lxsession", "startlxde", "openbox", "xfce4-session", "xinit", "labwc", "wayfire")):
+                add(user)
+    except Exception:
+        pass
+
+    return out
+
+
+def _display_candidates() -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+
+    def add(value: str | None):
+        value = (value or "").strip()
+        if not value or value in seen:
+            return
+        seen.add(value)
+        out.append(value)
+
+    add(os.environ.get("DISPLAY", ""))
+    add(":0")
+    add(":1")
+    return out
+
+
+def _build_display_env(username: str, display_name: str) -> dict:
+    env = os.environ.copy()
+    env["DISPLAY"] = display_name
+    try:
+        pwent = pwd.getpwnam(username)
+        env["HOME"] = pwent.pw_dir
+        env.setdefault("USER", username)
+        env.setdefault("LOGNAME", username)
+
+        xauth_candidates = [
+            Path(pwent.pw_dir) / ".Xauthority",
+            Path(f"/run/user/{pwent.pw_uid}/gdm/Xauthority"),
+            Path(f"/run/user/{pwent.pw_uid}/Xauthority"),
+        ]
+        for xauth in xauth_candidates:
+            if xauth.exists():
+                env["XAUTHORITY"] = str(xauth)
+                break
+
+        bus = Path(f"/run/user/{pwent.pw_uid}/bus")
+        if bus.exists():
+            env.setdefault("DBUS_SESSION_BUS_ADDRESS", f"unix:path={bus}")
+    except Exception:
+        pass
+    return env
+
+
+def _run_subprocess_as_user(cmd: list[str], username: str, env: dict, timeout: float = 6.0) -> subprocess.CompletedProcess:
+    current_user = ""
+    try:
+        current_user = pwd.getpwuid(os.geteuid()).pw_name
+    except Exception:
+        current_user = ""
+
+    if username and os.geteuid() == 0 and username != current_user:
+        if shutil.which("sudo"):
+            return subprocess.run(["sudo", "-u", username, "-H", *cmd], capture_output=True, text=True, timeout=timeout, env=env)
+        if shutil.which("runuser"):
+            shell_cmd = shlex.join(cmd)
+            return subprocess.run(["runuser", "-l", username, "-c", "bash -lc " + shlex.quote(shell_cmd)], capture_output=True, text=True, timeout=timeout, env=env)
+        if shutil.which("su"):
+            shell_cmd = shlex.join(cmd)
+            return subprocess.run(["su", "-", username, "-c", "bash -lc " + shlex.quote(shell_cmd)], capture_output=True, text=True, timeout=timeout, env=env)
+
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+
+
+def _parse_xrandr_output(stdout: str) -> list[dict]:
+    outputs: list[dict] = []
+    current_output: dict | None = None
+    mode_re = re.compile(r"^\s+([0-9]+x[0-9]+[A-Za-z]*)\s+(.*)$")
+    header_re = re.compile(r"^(\S+)\s+connected(?:\s+primary)?(?:\s+([0-9]+x[0-9]+)\+[0-9]+\+[0-9]+)?")
+
+    for raw_line in (stdout or "").splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            continue
+
+        if not raw_line.startswith((" ", "	")):
+            current_output = None
+            header = header_re.search(line)
+            if not header:
+                continue
+            current_output = {
+                "name": header.group(1),
+                "current_mode": header.group(2) or "",
+                "current_rate": "",
+                "modes": [],
+            }
+            outputs.append(current_output)
+            continue
+
+        if not current_output:
+            continue
+
+        match = mode_re.match(line)
+        if not match:
+            continue
+
+        mode_name = match.group(1).strip()
+        rates_blob = match.group(2).strip()
+        seen_keys: set[str] = set()
+        for token in rates_blob.split():
+            token = token.strip()
+            if not token or not re.match(r"^[0-9.]+[*+]*$", token):
+                continue
+            rate = re.sub(r"[^0-9.]", "", token)
+            key = f"{mode_name}@{rate}" if rate else mode_name
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            is_current = "*" in token
+            is_preferred = "+" in token
+            label = mode_name + (f" @ {rate} Hz" if rate else "")
+            entry = {
+                "key": key,
+                "mode": mode_name,
+                "rate": rate,
+                "label": label,
+                "is_current": is_current,
+                "is_preferred": is_preferred,
+            }
+            current_output["modes"].append(entry)
+            if is_current:
+                current_output["current_mode"] = mode_name
+                current_output["current_rate"] = rate
+
+    parsed: list[dict] = []
+    for output in outputs:
+        if output.get("modes"):
+            parsed.append(output)
+    return parsed
+
+
+def _probe_xrandr_session() -> dict:
+    xrandr_cmd = str(AUTODARTS_DISPLAY_XRANDR or "xrandr").strip() or "xrandr"
+    if not shutil.which(xrandr_cmd) and not Path(xrandr_cmd).exists():
+        return {
+            "ok": False,
+            "reason": t("themes.display_no_xrandr", "xrandr wurde auf diesem System nicht gefunden."),
+        }
+
+    any_query_success = False
+    first_open_display_error = ""
+
+    for username in _display_user_candidates():
+        for display_name in _display_candidates():
+            env = _build_display_env(username, display_name)
+            try:
+                result = _run_subprocess_as_user([xrandr_cmd, "--query"], username, env, timeout=6.0)
+            except Exception as exc:
+                first_open_display_error = first_open_display_error or str(exc)
+                continue
+
+            stdout = (result.stdout or "").strip()
+            stderr = (result.stderr or "").strip()
+
+            if result.returncode != 0:
+                if stderr and not first_open_display_error:
+                    first_open_display_error = stderr
+                continue
+
+            any_query_success = True
+            outputs = _parse_xrandr_output(stdout)
+            if outputs:
+                return {
+                    "ok": True,
+                    "user": username,
+                    "display": display_name,
+                    "outputs": outputs,
+                }
+
+    if any_query_success:
+        return {
+            "ok": False,
+            "reason": t("themes.display_no_monitor", "Es wurde kein aktiver Monitor am Raspberry erkannt."),
+        }
+
+    message = first_open_display_error or ""
+    lowered = message.lower()
+    if (not message) or ("open display" in lowered) or ("can't open display" in lowered) or ("unable to open display" in lowered) or ("authorization required" in lowered):
+        message = t("themes.display_no_session", "Keine passende X11-Desktop-Sitzung gefunden.")
+    return {
+        "ok": False,
+        "reason": message,
+    }
+
+
+def get_autodarts_display_info() -> dict:
+    model = get_pi_model_name()
+    is_pi5 = is_pi5_model(model)
+    probe = _probe_xrandr_session()
+
+    info = {
+        "available": False,
+        "show_in_theme_card": bool(is_pi5) if AUTODARTS_DISPLAY_SECTION_PI5_ONLY else True,
+        "backend": "x11",
+        "model": model,
+        "is_pi5": is_pi5,
+        "message": probe.get("reason") or "",
+        "outputs": [],
+    }
+
+    if probe.get("ok"):
+        outputs = probe.get("outputs") or []
+        info.update({
+            "available": bool(outputs),
+            "show_in_theme_card": True,
+            "message": t("themes.display_ready", "Lokaler Monitor erkannt. Die Änderung gilt sofort auf dem Pi-Bildschirm."),
+            "outputs": outputs,
+        })
+
+    return info
+
+
+def _find_display_mode(outputs: list[dict], output_name: str, mode_key: str) -> tuple[dict | None, dict | None]:
+    for output in outputs or []:
+        if str(output.get("name") or "") != output_name:
+            continue
+        for mode in output.get("modes", []) or []:
+            if str(mode.get("key") or "") == mode_key:
+                return output, mode
+        return output, None
+    return None, None
+
+
+def apply_autodarts_display_mode(output_name: str, mode_key: str) -> dict:
+    output_name = (output_name or "").strip()
+    mode_key = (mode_key or "").strip()
+    if not output_name:
+        return {"ok": False, "message": t("themes.display_output_required", "Bitte zuerst einen Bildschirm-Ausgang auswählen.")}
+    if not mode_key:
+        return {"ok": False, "message": t("themes.display_mode_required", "Bitte zuerst eine Auflösung auswählen.")}
+
+    probe = _probe_xrandr_session()
+    if not probe.get("ok"):
+        return {"ok": False, "message": probe.get("reason") or t("themes.display_no_session", "Keine passende X11-Desktop-Sitzung gefunden.")}
+
+    outputs = probe.get("outputs") or []
+    output, mode = _find_display_mode(outputs, output_name, mode_key)
+    if not output:
+        return {"ok": False, "message": t("themes.display_output_missing", "Der gewählte Bildschirm-Ausgang wurde nicht gefunden.")}
+    if not mode:
+        return {"ok": False, "message": t("themes.display_mode_missing", "Die gewählte Auflösung ist aktuell nicht verfügbar.")}
+
+    env = _build_display_env(str(probe.get("user") or ""), str(probe.get("display") or ":0"))
+    cmd = [str(AUTODARTS_DISPLAY_XRANDR or "xrandr").strip() or "xrandr", "--output", output_name, "--mode", str(mode.get("mode") or "")]
+    if mode.get("rate"):
+        cmd.extend(["--rate", str(mode.get("rate"))])
+
+    try:
+        result = _run_subprocess_as_user(cmd, str(probe.get("user") or ""), env, timeout=8.0)
+    except Exception as exc:
+        return {"ok": False, "message": str(exc)}
+
+    if result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        return {
+            "ok": False,
+            "message": stderr or t("themes.display_apply_failed", "Die Auflösung konnte nicht gesetzt werden."),
+        }
+
+    refreshed = get_autodarts_display_info()
+    return {
+        "ok": True,
+        "message": t("themes.display_applied", "Auflösung {mode} übernommen.", mode=(mode.get("label") or mode.get("mode") or mode_key)),
+        "display_info": refreshed,
+    }
+
+
+
+def _ensure_autodarts_theme_state_parent():
+    try:
+        AUTODARTS_THEME_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
+
+def _autodarts_theme_default_state() -> dict:
+    return {"selected": "default"}
+
+
+def load_autodarts_theme_state() -> dict:
+    try:
+        data = json.loads(AUTODARTS_THEME_STATE_PATH.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            selected = str(data.get("selected") or "default").strip() or "default"
+            return {"selected": selected}
+    except Exception:
+        pass
+    return _autodarts_theme_default_state()
+
+
+def save_autodarts_theme_state(selected: str) -> dict:
+    payload = {"selected": (selected or "default").strip() or "default"}
+    _ensure_autodarts_theme_state_parent()
+    AUTODARTS_THEME_STATE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return payload
+
+
+def _parse_autodarts_theme_header_value(head: str, labels: tuple[str, ...]) -> str:
+    if not head:
+        return ""
+    label_group = "|".join(re.escape(label) for label in labels)
+    patterns = [
+        rf"^\s*/\*\s*(?:{label_group})\s*:\s*(.+?)\s*\*/",
+        rf"^\s*(?:{label_group})\s*:\s*(.+?)\s*$",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, head, flags=re.MULTILINE | re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+    return ""
+
+
+
+def parse_autodarts_theme_metadata(css_text: str) -> dict[str, str]:
+    if not css_text:
+        return {"author": "", "modes": "", "resolution": ""}
+
+    head = "\n".join(css_text.splitlines()[:30])
+    author = _parse_autodarts_theme_header_value(head, ("Autor", "Author"))
+    modes = _parse_autodarts_theme_header_value(head, ("Spielmodus", "Spielmodi", "Game mode", "Game modes", "Mode", "Modes"))
+    resolution = _parse_autodarts_theme_header_value(head, ("Bildschirmauflösung", "Auflösung", "Resolution", "Screen resolution"))
+
+    if not resolution:
+        fallback_patterns = [
+            r"für\s+Auflösung\s+([0-9]{3,5}\s*[x×]\s*[0-9]{3,5})",
+            r"for\s+resolution\s+([0-9]{3,5}\s*[x×]\s*[0-9]{3,5})",
+        ]
+        for pattern in fallback_patterns:
+            match = re.search(pattern, head, flags=re.IGNORECASE)
+            if match:
+                resolution = match.group(1).strip()
+                break
+
+    if resolution:
+        resolution = re.sub(r"\s*[×x]\s*", " × ", resolution)
+
+    if modes:
+        modes = re.sub(r"\s*,\s*", ", ", modes.strip())
+
+    return {
+        "author": author,
+        "modes": modes,
+        "resolution": resolution,
+    }
+
+
+
+def parse_autodarts_theme_author(css_text: str) -> str:
+    return parse_autodarts_theme_metadata(css_text).get("author", "")
+
+
+def autodarts_theme_preview_path_for_css(path: Path) -> Path | None:
+    stem = path.stem
+    for ext in (".png", ".jpg", ".jpeg", ".webp", ".gif"):
+        candidate = path.with_suffix(ext)
+        if candidate.exists() and candidate.is_file():
+            return candidate
+    return None
+
+
+def list_autodarts_themes() -> list[dict]:
+    try:
+        AUTODARTS_THEME_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
+    items: list[dict] = []
+    try:
+        candidates = sorted(AUTODARTS_THEME_DIR.glob("*.css"), key=lambda p: p.name.lower())
+    except Exception:
+        candidates = []
+
+    for path in candidates:
+        try:
+            css_text = path.read_text(encoding="utf-8")
+        except Exception:
+            css_text = ""
+        preview_path = autodarts_theme_preview_path_for_css(path)
+        theme_meta = parse_autodarts_theme_metadata(css_text)
+        items.append({
+            "name": path.stem,
+            "filename": path.name,
+            "author": theme_meta.get("author", ""),
+            "modes": theme_meta.get("modes", ""),
+            "resolution": theme_meta.get("resolution", ""),
+            "path": str(path),
+            "preview_filename": preview_path.name if preview_path else "",
+            "has_preview": bool(preview_path),
+        })
+    return items
+
+
+def get_autodarts_theme_entry(filename: str | None):
+    filename = (filename or "").strip()
+    if not filename or filename == "default":
+        return None
+    for item in list_autodarts_themes():
+        if item.get("filename") == filename:
+            return item
+    return None
+
+
+def get_selected_autodarts_theme_name() -> str:
+    state = load_autodarts_theme_state()
+    selected = str(state.get("selected") or "default").strip() or "default"
+    if selected == "default":
+        return "default"
+    return selected if get_autodarts_theme_entry(selected) else "default"
+
+
+def read_selected_autodarts_theme_css() -> tuple[str, dict | None]:
+    selected = get_selected_autodarts_theme_name()
+    entry = get_autodarts_theme_entry(selected)
+    if not entry:
+        return "", None
+    try:
+        css = Path(entry["path"]).read_text(encoding="utf-8")
+    except Exception:
+        return "", entry
+    return css, entry
+
+
+
+def _caller_user_candidates() -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+
+    def add(username: str | None):
+        username = (username or "").strip()
+        if not username or username in seen or username == "root":
+            return
+        try:
+            home = Path(pwd.getpwnam(username).pw_dir)
+        except Exception:
+            return
+        if not home.exists():
+            return
+        seen.add(username)
+        out.append(username)
+
+    for username in _display_user_candidates():
+        add(username)
+
+    try:
+        for entry in sorted(Path('/home').iterdir()):
+            if entry.is_dir():
+                add(entry.name)
+    except Exception:
+        pass
+
+    return out
+
+
+def _caller_desktop_dir_for_user(username: str) -> Path:
+    pwent = pwd.getpwnam(username)
+    home_dir = Path(pwent.pw_dir)
+    desktop_dir = home_dir / 'Desktop'
+
+    xdg_cmd = shutil.which('xdg-user-dir')
+    if xdg_cmd:
+        env = os.environ.copy()
+        env['HOME'] = str(home_dir)
+        env.setdefault('USER', username)
+        env.setdefault('LOGNAME', username)
+        try:
+            result = _run_subprocess_as_user([xdg_cmd, 'DESKTOP'], username, env, timeout=3.0)
+            candidate = (result.stdout or '').strip()
+            if result.returncode == 0 and candidate.startswith('/'):
+                desktop_dir = Path(candidate)
+        except Exception:
+            pass
+
+    return desktop_dir
+
+
+def _caller_install_target() -> tuple[str | None, Path | None, Path | None, str]:
+    for username in _caller_user_candidates():
+        try:
+            desktop_dir = _caller_desktop_dir_for_user(username)
+        except Exception:
+            continue
+        target_dir = desktop_dir / AUTODARTS_CALLER_DIR_NAME
+        return username, desktop_dir, target_dir, ''
+    return None, None, None, t('caller.install_user_missing', 'Es konnte kein passender lokaler Desktop-Benutzer gefunden werden.')
+
+
+def _caller_strip_root_folder(names: list[str]) -> str:
+    roots: set[str] = set()
+    for raw_name in names:
+        name = str(raw_name or '').replace('\\', '/').strip('/')
+        if not name or name.startswith('__MACOSX/'):
+            continue
+        parts = [p for p in name.split('/') if p]
+        if not parts:
+            continue
+        roots.add(parts[0])
+    if len(roots) != 1:
+        return ''
+    root = next(iter(roots))
+    for raw_name in names:
+        name = str(raw_name or '').replace('\\', '/').strip('/')
+        if not name or name.startswith('__MACOSX/'):
+            continue
+        parts = [p for p in name.split('/') if p]
+        if len(parts) <= 1:
+            return ''
+        if parts[0] != root:
+            return ''
+    return root
+
+
+def _caller_extract_zip(zip_path: Path, target_dir: Path):
+    with zipfile.ZipFile(zip_path, 'r') as zf:
+        strip_root = _caller_strip_root_folder(zf.namelist())
+        for info in zf.infolist():
+            raw_name = str(info.filename or '').replace('\\', '/').strip('/')
+            if not raw_name or raw_name.startswith('__MACOSX/'):
+                continue
+
+            parts = list(PurePosixPath(raw_name).parts)
+            if any(part in ('..', '') for part in parts):
+                continue
+            if strip_root and parts and parts[0] == strip_root:
+                parts = parts[1:]
+            if not parts:
+                continue
+
+            dest = target_dir.joinpath(*parts)
+            try:
+                dest.relative_to(target_dir)
+            except Exception:
+                continue
+
+            if info.is_dir():
+                dest.mkdir(parents=True, exist_ok=True)
+                continue
+
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(info, 'r') as src, open(dest, 'wb') as dst:
+                shutil.copyfileobj(src, dst)
+
+            mode = (info.external_attr >> 16) & 0o777
+            if mode:
+                try:
+                    os.chmod(dest, mode)
+                except Exception:
+                    pass
+
+
+def _caller_chown_recursive(path: Path, username: str):
+    try:
+        pwent = pwd.getpwnam(username)
+    except Exception:
+        return
+    uid, gid = pwent.pw_uid, pwent.pw_gid
+
+    for root, dirs, files in os.walk(path):
+        try:
+            os.chown(root, uid, gid)
+        except Exception:
+            pass
+        for name in dirs:
+            try:
+                os.chown(os.path.join(root, name), uid, gid)
+            except Exception:
+                pass
+        for name in files:
+            try:
+                os.chown(os.path.join(root, name), uid, gid)
+            except Exception:
+                pass
+
+    try:
+        os.chown(path, uid, gid)
+    except Exception:
+        pass
+
+
+def install_caller_locally() -> dict:
+    username, desktop_dir, target_dir, err = _caller_install_target()
+    if not username or not desktop_dir or not target_dir:
+        return {'ok': False, 'message': err or t('caller.install_failed', 'Caller konnte nicht installiert werden.')}
+
+    if not AUTODARTS_CALLER_INSTALL_LOCK.acquire(blocking=False):
+        return {'ok': False, 'message': t('caller.install_busy', 'Eine Caller-Installation läuft bereits. Bitte kurz warten und erneut versuchen.')}
+
+    try:
+        desktop_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='autodarts-caller-') as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            zip_path = tmpdir_path / 'CALLER_ALL.zip'
+
+            req = urllib.request.Request(AUTODARTS_CALLER_ZIP_URL, headers={'User-Agent': 'Autodarts-Webpanel/1.0'})
+            with urllib.request.urlopen(req, timeout=60) as resp, open(zip_path, 'wb') as out_file:
+                shutil.copyfileobj(resp, out_file)
+
+            if target_dir.exists():
+                shutil.rmtree(target_dir)
+            target_dir.mkdir(parents=True, exist_ok=True)
+            _caller_extract_zip(zip_path, target_dir)
+            _caller_chown_recursive(target_dir, username)
+
+        return {
+            'ok': True,
+            'message': t('caller.install_success', 'Caller wurde auf diesem Raspberry nach {path} installiert.', path=str(target_dir)),
+            'target_path': str(target_dir),
+            'desktop_path': str(desktop_dir),
+            'username': username,
+        }
+    except urllib.error.URLError as exc:
+        return {'ok': False, 'message': t('caller.install_download_failed', 'Download der Caller ZIP fehlgeschlagen: {error}', error=exc)}
+    except zipfile.BadZipFile:
+        return {'ok': False, 'message': t('caller.install_zip_invalid', 'Die geladene Caller ZIP ist ungültig oder beschädigt.')}
+    except Exception as exc:
+        return {'ok': False, 'message': t('caller.install_failed', 'Caller konnte nicht installiert werden: {error}', error=exc)}
+    finally:
+        try:
+            AUTODARTS_CALLER_INSTALL_LOCK.release()
+        except Exception:
+            pass
+
+
+def render_windows_caller_installer_bat() -> str:
+    url = AUTODARTS_CALLER_ZIP_URL.replace("'", "''")
+    folder = AUTODARTS_CALLER_DIR_NAME.replace('"', '')
+    script = f"""@echo off
+setlocal EnableExtensions
+
+set "CALLER_URL={url}"
+set "TARGET_NAME={folder}"
+
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "DESKTOP_DIR=%%I"
+if not defined DESKTOP_DIR set "DESKTOP_DIR=%USERPROFILE%\\Desktop"
+
+set "TARGET_DIR=%DESKTOP_DIR%\\%TARGET_NAME%"
+set "ZIP_FILE=%TEMP%\\CALLER_ALL.zip"
+
+echo.
+echo Caller wird nach "%TARGET_DIR%" installiert...
+echo.
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try {{ Invoke-WebRequest -Uri '%CALLER_URL%' -UseBasicParsing -OutFile '%ZIP_FILE%' }} catch {{ exit 1 }}"
+if errorlevel 1 goto :download_error
+
+if exist "%TARGET_DIR%" rmdir /s /q "%TARGET_DIR%"
+mkdir "%TARGET_DIR%" >nul 2>&1
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try {{ Expand-Archive -LiteralPath '%ZIP_FILE%' -DestinationPath '%TARGET_DIR%' -Force }} catch {{ exit 1 }}"
+if errorlevel 1 goto :extract_error
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$target='%TARGET_DIR%'; $items=Get-ChildItem -LiteralPath $target -Force; if($items.Count -eq 1 -and $items[0].PSIsContainer) {{ $inner=$items[0].FullName; Get-ChildItem -LiteralPath $inner -Force | ForEach-Object {{ Move-Item -LiteralPath $_.FullName -Destination $target -Force }}; Remove-Item -LiteralPath $inner -Force -Recurse }}"
+
+del "%ZIP_FILE%" >nul 2>&1
+
+echo.
+echo Fertig. Der Ordner "%TARGET_DIR%" ist jetzt auf dem Desktop.
+pause
+exit /b 0
+
+:download_error
+echo Fehler: Caller ZIP konnte nicht heruntergeladen werden.
+pause
+exit /b 1
+
+:extract_error
+echo Fehler: Caller ZIP konnte nicht entpackt werden.
+pause
+exit /b 1
+"""
+    return script.replace("\n", "\r\n")
+
+
+def t(key: str, fallback: str = "", **kwargs) -> str:
+    languages, _, _ = _load_all_lang_jsons()
+    code = _get_current_lang_code()
+    lang_data = languages.get(code, {}) or {}
+
+    placeholder = lang_data.get("placeholder", {})
+    if not isinstance(placeholder, dict):
+        placeholder = {}
+
+    value = placeholder.get(key, fallback)
+
+    if isinstance(value, (dict, list)):
+        value = fallback
+
+    text = str(value)
+
+    if kwargs:
+        try:
+            text = text.format(**kwargs)
+        except Exception:
+            pass
+
+    return text
+
+@app.context_processor
+def inject_i18n_helpers():
+    return {
+        "t": t,
+        "current_lang": _get_current_lang_code(),
+    }
+
+
+def _forbidden_response():
+    return (t("auth.forbidden", "Forbidden"), 403)
+
+
+def _inline_notice_page(title: str, body_html: str, status: int = 200, html_lang: str | None = None) -> tuple[str, int]:
+    lang = html_lang or _get_current_lang_code()
+    html = (
+        f"<!doctype html><html lang='{lang}'>"
+        "<head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        f"<title>{title}</title></head>"
+        "<body style='font-family:system-ui;background:#111;color:#eee;padding:20px;'>"
+        f"<h1>{title}</h1>"
+        f"{body_html}"
+        "</body></html>"
+    )
+    return html, status
+
+def _json_nocache(payload: dict, status: int = 200):
+    resp = jsonify(payload)
+    resp.status_code = status
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
+
+
+@app.route("/api/langs", methods=["GET"])
+def api_langs():
+    languages, sources, err = _load_all_lang_jsons()
+    status = 200
+    default_code, default_err = _resolve_default_lang_code(languages)
+
+    msg_parts = [x for x in [err, default_err] if x]
+    return _json_nocache({
+        "ok": bool(languages),
+        "count": len(languages),
+        "dir": str(LANG_JSON_DIR),
+        "config_file": str(LANG_CONFIG_PATH),
+        "default": default_code,
+        "sources": sources,
+        "data": languages,
+        "msg": " | ".join(msg_parts) if msg_parts else None,
+    }, status)
+
+
+@app.route("/api/lang/default", methods=["GET", "POST", "PUT"])
+def api_lang_default():
+    languages, sources, err = _load_all_lang_jsons()
+    default_code, default_err = _resolve_default_lang_code(languages)
+
+    if request.method == "GET":
+        msg_parts = [x for x in [err, default_err] if x]
+        return _json_nocache({
+            "ok": bool(default_code),
+            "default": default_code,
+            "config_file": str(LANG_CONFIG_PATH),
+            "available": sorted(languages.keys()),
+            "sources": sources,
+            "msg": " | ".join(msg_parts) if msg_parts else None,
+        }, 200)
+
+    payload = request.get_json(silent=True) or {}
+    requested_code = (
+        payload.get("default")
+        or payload.get("abk")
+        or payload.get("code")
+        or request.form.get("default")
+        or request.form.get("abk")
+        or request.form.get("code")
+        or request.args.get("default")
+        or request.args.get("abk")
+        or request.args.get("code")
+    )
+    normalized = _normalize_lang_code(requested_code)
+    if not normalized:
+        return _json_nocache({
+            "ok": False,
+            "msg": "Bitte einen Sprachcode senden, z. B. {'default':'de'}.",
+            "available": sorted(languages.keys()),
+        }, 200)
+
+    if languages and normalized not in languages:
+        return _json_nocache({
+            "ok": False,
+            "default": default_code,
+            "requested": normalized,
+            "available": sorted(languages.keys()),
+            "msg": f"Sprache '{normalized}' wurde in {LANG_JSON_DIR} nicht gefunden.",
+        }, 200)
+
+    ok, write_err = _write_lang_default_config(normalized)
+    if not ok:
+        return _json_nocache({
+            "ok": False,
+            "requested": normalized,
+            "msg": write_err,
+            "config_file": str(LANG_CONFIG_PATH),
+        }, 200)
+
+    return _json_nocache({
+        "ok": True,
+        "default": normalized,
+        "requested": normalized,
+        "config_file": str(LANG_CONFIG_PATH),
+        "available": sorted(languages.keys()),
+        "msg": f"Default-Sprache wurde auf '{normalized}' gesetzt.",
+    })
+
+
+@app.route("/lang/all.js", methods=["GET"])
+@app.route("/langs.js", methods=["GET"])
+def lang_all_js():
+    languages, sources, err = _load_all_lang_jsons()
+    payload = json.dumps(languages, ensure_ascii=False)
+    default_code, default_err = _resolve_default_lang_code(languages)
+
+    js_lines = [
+        f"window.lang_code = {payload};",
+        "window.lang = window.lang_code || {};",
+        f"window.lang_sources = {json.dumps(sources, ensure_ascii=False)};",
+        f"window.lang_dir = {json.dumps(str(LANG_JSON_DIR), ensure_ascii=False)};",
+        f"window.lang_default = {json.dumps(default_code, ensure_ascii=False)};",
+        f"window.lang_config_file = {json.dumps(str(LANG_CONFIG_PATH), ensure_ascii=False)};",
+    ]
+
+    if err:
+        js_lines.append(f"window.lang_error = {json.dumps(err, ensure_ascii=False)};")
+    if default_err:
+        js_lines.append(f"window.lang_default_error = {json.dumps(default_err, ensure_ascii=False)};")
+
+    js = "\n".join(js_lines) + "\n"
+    resp = Response(js, status=200, mimetype="application/javascript")
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.route("/api/lang/<code>", methods=["GET"])
+def api_lang(code: str):
+    data, path, err, normalized = _load_lang_json(code)
+    if err:
+        return _json_nocache({"ok": False, "code": normalized, "msg": err, "source": path}, 200)
+
+    languages, _, _ = _load_all_lang_jsons()
+    default_code, default_err = _resolve_default_lang_code(languages)
+
+    return _json_nocache({
+        "ok": True,
+        "code": normalized,
+        "source": path,
+        "is_default": normalized == default_code,
+        "default": default_code,
+        "default_msg": default_err,
+        "data": data,
+    })
+
+
+@app.route("/lang/<code>.js", methods=["GET"])
+def lang_js(code: str):
+    data, path, err, normalized = _load_lang_json(code)
+    if err:
+        js = "window.lang_code = {};\n"
+        js += "window.lang = window.lang || {};\n"
+        js += f"window.lang[{json.dumps(normalized or code)}] = window.lang_code\n"
+        js += f"window.lang_error = {json.dumps(err, ensure_ascii=False)}\n"
+        return Response(js, status=200, mimetype="application/javascript")
+
+    languages, _, _ = _load_all_lang_jsons()
+    default_code, default_err = _resolve_default_lang_code(languages)
+
+    payload = json.dumps(data, ensure_ascii=False)
+    lang_key = normalized.replace("-", "_")
+    js = "\n".join([
+        f"window.lang_code = {payload};",
+        "window.lang = window.lang || {};",
+        f"window.lang[{json.dumps(normalized)}] = window.lang_code;",
+        f'window["lang_{lang_key}"] = window.lang_code;',
+        f"window.lang_source = {json.dumps(path, ensure_ascii=False)};",
+        f"window.lang_default = {json.dumps(default_code, ensure_ascii=False)};",
+        f"window.lang_is_default = {json.dumps(normalized == default_code)};",
+        f"window.lang_config_file = {json.dumps(str(LANG_CONFIG_PATH), ensure_ascii=False)};",
+    ]) + "\n"
+
+    if default_err:
+        js += f"window.lang_default_error = {json.dumps(default_err, ensure_ascii=False)}\n"
+
+    resp = Response(js, mimetype="application/javascript")
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.route("/help", methods=["GET"])
 def help_page():
     """Handbuch als PDF (inline) aus AUTODARTS_DATA_DIR ausliefern."""
     pdf_path = DATA_DIR / HELP_PDF_FILENAME
     if not pdf_path.exists():
-        return (
-            "<html><body><h1>Handbuch nicht gefunden</h1>"
-            "<p>Die Datei <code>Autodarts_install_manual.pdf</code> wurde nicht gefunden.</p>"
-            "</body></html>",
-            404,
+        return _inline_notice_page(
+            t("help.not_found_title", "Handbuch nicht gefunden"),
+            f"<p>{t('help.not_found_text', 'Die Datei <code>{filename}</code> wurde nicht gefunden.', filename=HELP_PDF_FILENAME)}</p>",
+            status=404,
         )
 
     resp = send_from_directory(str(DATA_DIR), HELP_PDF_FILENAME)
     resp.headers["Content-Type"] = "application/pdf"
     resp.headers["Content-Disposition"] = f'inline; filename="{HELP_PDF_FILENAME}"'
+    return resp
+
+
+
+
+@app.route("/api/autodarts/display-info", methods=["GET"])
+def api_autodarts_display_info():
+    return _json_nocache({
+        "ok": True,
+        "display_info": get_autodarts_display_info(),
+    })
+
+
+@app.route("/api/autodarts/display-mode", methods=["POST"])
+def api_autodarts_display_mode():
+    payload = request.get_json(silent=True) or {}
+    output_name = str(payload.get("output") or "").strip()
+    mode_key = str(payload.get("mode") or payload.get("mode_key") or "").strip()
+    result = apply_autodarts_display_mode(output_name, mode_key)
+    status = 200 if result.get("ok") else 200
+    return _json_nocache(result, status)
+
+
+@app.route("/api/autodarts-theme/preview/<path:filename>", methods=["GET"])
+def api_autodarts_theme_preview(filename):
+    safe_name = os.path.basename(str(filename or "").strip())
+    if not safe_name:
+        abort(404)
+    css_name = Path(safe_name).stem + ".css"
+    entry = get_autodarts_theme_entry(css_name)
+    if not entry:
+        abort(404)
+    css_path = Path(entry.get("path", ""))
+    preview_path = autodarts_theme_preview_path_for_css(css_path)
+    if not preview_path:
+        abort(404)
+    return send_from_directory(str(AUTODARTS_THEME_DIR), preview_path.name, as_attachment=False)
+
+
+@app.route("/api/autodarts-theme/state", methods=["GET"])
+def api_autodarts_theme_state():
+    themes = list_autodarts_themes()
+    selected = get_selected_autodarts_theme_name()
+    entry = get_autodarts_theme_entry(selected)
+    return jsonify({
+        "ok": True,
+        "selected": selected,
+        "author": (entry or {}).get("author", ""),
+        "modes": (entry or {}).get("modes", ""),
+        "resolution": (entry or {}).get("resolution", ""),
+        "panel_url": AUTODARTS_THEME_PANEL_URL,
+        "theme_dir": str(AUTODARTS_THEME_DIR),
+        "store_url": AUTODARTS_THEME_STORE_URL,
+        "themes": themes,
+    })
+
+
+@app.route("/api/autodarts-theme/select", methods=["POST"])
+def api_autodarts_theme_select():
+    payload = request.get_json(silent=True) if request.is_json else None
+    selected = ""
+    if isinstance(payload, dict):
+        selected = str(payload.get("selected") or "")
+    if not selected:
+        selected = str(request.form.get("selected") or request.args.get("selected") or "")
+    selected = selected.strip() or "default"
+
+    if selected != "default" and not get_autodarts_theme_entry(selected):
+        return jsonify({
+            "ok": False,
+            "message": t("themes.invalid", "Ungültiges Theme ausgewählt."),
+        }), 400
+
+    state = save_autodarts_theme_state(selected)
+    entry = get_autodarts_theme_entry(state.get("selected"))
+    author = (entry or {}).get("author", "")
+    if state.get("selected") == "default":
+        message = t("themes.saved_default", "Default-Theme aktiviert.")
+    else:
+        message = t("themes.saved_theme", "Theme '{theme}' aktiviert.", theme=(entry or {}).get("name", state.get("selected")))
+
+    return jsonify({
+        "ok": True,
+        "selected": state.get("selected", "default"),
+        "theme": (entry or {}).get("name", "default"),
+        "filename": (entry or {}).get("filename", "default"),
+        "author": author,
+        "modes": (entry or {}).get("modes", ""),
+        "resolution": (entry or {}).get("resolution", ""),
+        "message": message,
+    })
+
+
+@app.route("/api/autodarts-theme.css", methods=["GET"])
+def api_autodarts_theme_css():
+    css, entry = read_selected_autodarts_theme_css()
+    headers = {"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
+    if not css:
+        return Response("", mimetype="text/css", headers=headers)
+    return Response(css, mimetype="text/css", headers=headers)
+
+
+@app.route("/api/caller/install-local", methods=["POST"])
+def api_caller_install_local():
+    result = install_caller_locally()
+    status = 200 if result.get("ok") else 500
+    return _json_nocache(result, status)
+
+
+@app.route("/download/windows-caller-install.bat", methods=["GET"])
+def download_windows_caller_install_bat():
+    content = render_windows_caller_installer_bat()
+    resp = Response(content, mimetype="application/octet-stream")
+    resp.headers["Content-Disposition"] = f'attachment; filename="{AUTODARTS_CALLER_WINDOWS_INSTALLER_FILENAME}"'
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return resp
 
 
@@ -4038,7 +5542,7 @@ def index():
             save_cam_config(cam_config)
 
         if cam_count_found == 0:
-            cam_info_message = "Es wurden noch keine Kameras gesucht."
+            cam_info_message = t("camera.none_searched_yet", "Es wurden noch keine Kameras gesucht.")
     host = request.host.split(":", 1)[0]
     darts_url = f"http://{host}:3180"
 
@@ -4064,7 +5568,7 @@ def index():
     autoupdate_enabled = autodarts_autoupdate_is_enabled()
     update_check = load_update_check()
     webpanel_version = get_webpanel_version()
-    webpanel_check = load_webpanel_update_check() if admin_unlocked else {}
+    webpanel_check = load_webpanel_update_check()
     webpanel_update_available = bool(webpanel_check.get('installed') and webpanel_check.get('latest') and webpanel_check.get('installed') != webpanel_check.get('latest'))
     webpanel_state = load_webpanel_update_state() if admin_unlocked else {}
     webpanel_log_tail = tail_file(WEBPANEL_UPDATE_LOG, n=25, max_chars=3500) if admin_unlocked else ""
@@ -4083,6 +5587,9 @@ def index():
 
     ufw_installed = ufw_is_installed()
     ufw_state = load_ufw_state() if admin_unlocked else {}
+    if admin_unlocked and ufw_state.get("status") == "installing":
+        ufw_state = ufw_refresh_state()
+        ufw_installed = bool(ufw_state.get("installed"))
 
     wled_targets = wled_cfg.get("targets", []) or []
     while len(wled_targets) < 3:
@@ -4199,6 +5706,12 @@ def index():
         extensions_log_tail=extensions_log_tail,
         lan_ok=lan_ok,
         lan_ip=lan_ip,
+        autodarts_themes=list_autodarts_themes(),
+        autodarts_theme_selected=get_selected_autodarts_theme_name(),
+        autodarts_theme_dir=str(AUTODARTS_THEME_DIR),
+        autodarts_theme_panel_url=AUTODARTS_THEME_PANEL_URL,
+        autodarts_theme_store_url=AUTODARTS_THEME_STORE_URL,
+        autodarts_display_info=get_autodarts_display_info(),
     )
 
 
@@ -4210,7 +5723,7 @@ def led_save():
 
     cur_email, cur_pw, cur_board, exists, err = read_darts_caller_credentials()
     if not exists:
-        return redirect(url_for("index", ledcheck="bad", ledmsg="start-custom.sh nicht gefunden."))
+        return redirect(url_for("index", ledcheck="bad", ledmsg=t("caller.start_custom_missing_short", "start-custom.sh nicht gefunden.")))
 
     # leer lassen => unverändert
     if not ad_email:
@@ -4222,21 +5735,21 @@ def led_save():
 
     try:
         write_darts_caller_credentials(ad_email, ad_password, ad_board)
-        return redirect(url_for("index", ledcheck="ok", ledmsg="Gespeichert (start-custom.sh aktualisiert)."))
+        return redirect(url_for("index", ledcheck="ok", ledmsg=t("caller.saved", "Gespeichert (start-custom.sh aktualisiert).")))
     except Exception as e:
-        return redirect(url_for("index", ledcheck="bad", ledmsg=f"Speichern fehlgeschlagen: {e}"))
+        return redirect(url_for("index", ledcheck="bad", ledmsg=t("generic.save_failed", "Speichern fehlgeschlagen: {error}", error=e)))
 
 
 @app.route("/led/check", methods=["POST"])
 def led_check():
     email, pw, bid, exists, err = read_darts_caller_credentials()
     if not exists:
-        return redirect(url_for("index", ledcheck="bad", ledmsg="start-custom.sh nicht gefunden."))
+        return redirect(url_for("index", ledcheck="bad", ledmsg=t("caller.start_custom_missing_short", "start-custom.sh nicht gefunden.")))
     if err:
         return redirect(url_for("index", ledcheck="bad", ledmsg=err))
     if not email or not pw or not bid:
-        return redirect(url_for("index", ledcheck="bad", ledmsg="Bitte Account/Passwort/Board-ID setzen. (2FA muss AUS sein)"))
-    return redirect(url_for("index", ledcheck="ok", ledmsg="Daten vorhanden. Hinweis: 2FA muss AUS sein."))
+        return redirect(url_for("index", ledcheck="bad", ledmsg=t("caller.set_credentials_2fa_off", "Bitte Account/Passwort/Board-ID setzen. (2FA muss AUS sein)")))
+    return redirect(url_for("index", ledcheck="ok", ledmsg=t("caller.data_present_2fa_off", "Daten vorhanden. Hinweis: 2FA muss AUS sein.")))
 
 
 
@@ -4274,7 +5787,7 @@ def _wled_json_post(ip_or_host: str, payload: dict, path: str = "/json/state", t
 def _resolve_wled_target_for_slot_or_host(slot: int | None, fallback_host: str | None = None):
     cfg = load_wled_config()
     if not bool(cfg.get("master_enabled", True)):
-        return None, None, "WLED ist global deaktiviert."
+        return None, None, t("wled.globally_disabled", "WLED ist global deaktiviert.")
 
     host = (fallback_host or "").strip()
     if slot and slot > 0:
@@ -4282,22 +5795,49 @@ def _resolve_wled_target_for_slot_or_host(slot: int | None, fallback_host: str |
         if 1 <= slot <= len(targets):
             t = targets[slot - 1] or {}
             if not bool(t.get("enabled", False)):
-                return None, None, f"WLED Slot {slot} ist deaktiviert."
+                return None, None, t("wled.slot_disabled", "WLED Slot {slot} ist deaktiviert.", slot=slot)
             cfg_host = str(t.get("host", "")).strip()
             if cfg_host:
                 host = cfg_host
 
     if not host:
-        return None, None, "Kein WLED Host gefunden."
+        return None, None, t("wled.no_host_found", "Kein WLED Host gefunden.")
 
     ip = resolve_host_to_ip_fast(host, timeout_s=0.8)
     if not ip:
-        return None, host, f"{host} konnte nicht aufgelöst werden."
+        return None, host, t("wled.host_could_not_resolve", "{host} konnte nicht aufgelöst werden.", host=host)
 
     if not is_wled_reachable(ip, timeout_sec=1.0):
-        return None, host, f"{host} ({ip}) ist nicht erreichbar."
+        return None, host, t("wled.host_unreachable", "{host} ({ip}) ist nicht erreichbar.", host=host, ip=ip)
 
     return ip, host, None
+
+
+def _wled_preset_name_from_editor(preset: int) -> str:
+    ok, _msg, rows, _weps = load_wled_presets_state()
+    if not ok or preset < 1:
+        return f"Preset {preset}"
+
+    row = next((r for r in rows if int(r.get("preset") or 0) == int(preset)), None)
+    if not row:
+        return f"Preset {preset}"
+
+    kind = str(row.get("kind") or "")
+    label = str(row.get("label") or "").strip()
+
+    if " / " in label:
+        label = label.split(" / ", 1)[0].strip()
+
+    if kind == "score_exact":
+        score = int(row.get("score") or 0)
+        return f"Score {score}"
+
+    if kind == "score_range":
+        from_val = int(row.get("from") or 0)
+        to_val = int(row.get("to") or 0)
+        return f"Score {from_val}-{to_val}"
+
+    return label or f"Preset {preset}"
 
 
 @app.route("/api/wled-presets/send", methods=["POST"])
@@ -4314,13 +5854,14 @@ def api_wled_presets_send():
     host_fallback = str(data.get("host") or "").strip()
 
     if preset < 1:
-        return jsonify({"ok": False, "msg": "Ungültige Preset-Nummer."}), 400
+        return jsonify({"ok": False, "msg": t("wled.invalid_preset_number", "Ungültige Preset-Nummer.")}), 400
 
     ip, host, err = _resolve_wled_target_for_slot_or_host(slot, host_fallback)
     if err:
         return jsonify({"ok": False, "msg": err}), 400
 
     try:
+        preset_name = _wled_preset_name_from_editor(preset)
         state_before = _wled_json_get(ip, "/json/state", timeout_s=1.5) or {}
         is_on = bool(state_before.get("on", False))
 
@@ -4334,14 +5875,14 @@ def api_wled_presets_send():
             except Exception:
                 loaded_existing = False
 
-            _wled_json_post(ip, {"psave": preset, "ib": True, "sb": True}, "/json/state", timeout_s=1.8)
+            _wled_json_post(ip, {"psave": preset, "n": preset_name, "ib": True, "sb": True}, "/json/state", timeout_s=1.8)
 
             if loaded_existing:
-                msg = f"Preset {preset} auf {host} übernommen und neu gespeichert."
+                msg = t("wled.preset_applied_and_saved", "Preset {preset} auf {host} übernommen und neu gespeichert.", preset=preset, host=host)
             else:
-                msg = f"Preset {preset} auf {host} neu aus dem aktuellen Zustand angelegt."
+                msg = t("wled.preset_created_from_current_state", "Preset {preset} auf {host} neu aus dem aktuellen Zustand angelegt.", preset=preset, host=host)
 
-            return jsonify({"ok": True, "msg": msg, "host": host, "ip": ip, "preset": preset})
+            return jsonify({"ok": True, "msg": msg, "host": host, "ip": ip, "preset": preset, "name": preset_name})
 
         default_payload = {
             "on": True,
@@ -4355,20 +5896,55 @@ def api_wled_presets_send():
                 "pal": 0
             }],
             "psave": preset,
+            "n": preset_name,
             "ib": True,
             "sb": True
         }
         _wled_json_post(ip, default_payload, "/json/state", timeout_s=1.8)
         return jsonify({
             "ok": True,
-            "msg": f"Preset {preset} auf {host} neu mit Standard-Licht angelegt.",
+            "msg": t("wled.preset_created_default_light", "Preset {preset} auf {host} neu mit Standard-Licht angelegt.", preset=preset, host=host),
             "host": host,
             "ip": ip,
             "preset": preset,
+            "name": preset_name,
             "used_default": True
         })
     except Exception as e:
-        return jsonify({"ok": False, "msg": f"WLED Senden fehlgeschlagen: {e}"}), 500
+        return jsonify({"ok": False, "msg": t("wled.send_failed", "WLED Senden fehlgeschlagen: {error}", error=e)}), 500
+
+
+@app.route("/api/wled-presets/delete", methods=["POST"])
+def api_wled_presets_delete():
+    data = request.get_json(silent=True) or {}
+    try:
+        preset = int(data.get("preset") or 0)
+    except Exception:
+        preset = 0
+    try:
+        slot = int(data.get("slot") or 0)
+    except Exception:
+        slot = 0
+    host_fallback = str(data.get("host") or "").strip()
+
+    if preset < 1:
+        return jsonify({"ok": False, "msg": t("wled.invalid_preset_number", "Ungültige Preset-Nummer.")}), 400
+
+    ip, host, err = _resolve_wled_target_for_slot_or_host(slot, host_fallback)
+    if err:
+        return jsonify({"ok": False, "msg": err}), 400
+
+    try:
+        _wled_json_post(ip, {"pdel": preset}, "/json/state", timeout_s=1.8)
+        return jsonify({
+            "ok": True,
+            "msg": t("wled.preset_deleted_remote", "Preset {preset} wurde auf {host} gelöscht.", preset=preset, host=host),
+            "host": host,
+            "ip": ip,
+            "preset": preset,
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": t("wled.delete_failed", "WLED Löschen fehlgeschlagen: {error}", error=e)}), 500
 
 
 @app.route("/api/wled-presets/load", methods=["GET"])
@@ -4409,58 +5985,58 @@ def wled_open():
 def wled_open_slot(slot: int):
     cfg = load_wled_config()
     if not bool(cfg.get("master_enabled", True)):
-        return (
-            "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-            "<h1>WLED deaktiviert</h1>"
-            "<p>WLED wurde in der Weboberfläche deaktiviert.</p>"
-            f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            200,
+        return _inline_notice_page(
+            t("wled.disabled_title", "WLED deaktiviert"),
+            (
+                f"<p>{t('wled.disabled_text', 'WLED wurde in der Weboberfläche deaktiviert.')}</p>"
+                f"<p><a style='color:#3b82f6' href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+            ),
+            status=200,
         )
 
     targets = cfg.get("targets", [])
     if slot < 1 or slot > len(targets):
-        return (
-            "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-            "<h1>Ungültiger WLED Slot</h1>"
-            f"<p>Slot {slot} existiert nicht.</p>"
-            f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            404,
+        return _inline_notice_page(
+            t("wled.invalid_slot_title", "Ungültiger WLED Slot"),
+            (
+                f"<p>{t('wled.slot_does_not_exist', 'Slot {slot} existiert nicht.', slot=slot)}</p>"
+                f"<p><a style='color:#3b82f6' href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+            ),
+            status=404,
         )
 
     host = str(targets[slot - 1].get("host", "")).strip()
     slot_enabled = bool(targets[slot - 1].get("enabled", False))
     if not slot_enabled:
-        return (
-            "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-            "<h1>WLED Slot deaktiviert</h1>"
-            f"<p>Slot {slot} ist aktuell nicht aktiviert.</p>"
-            f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            200,
+        return _inline_notice_page(
+            t("wled.slot_disabled_title", "WLED Slot deaktiviert"),
+            (
+                f"<p>{t('wled.slot_currently_disabled', 'Slot {slot} ist aktuell nicht aktiviert.', slot=slot)}</p>"
+                f"<p><a style='color:#3b82f6' href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+            ),
+            status=200,
         )
 
     if not host:
-        return (
-            "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-            "<h1>Kein WLED eingetragen</h1>"
-            f"<p>Für Slot {slot} wurde noch kein Hostname/IP eingetragen.</p>"
-            f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            400,
+        return _inline_notice_page(
+            t("wled.no_host_title", "Kein WLED eingetragen"),
+            (
+                f"<p>{t('wled.no_host_for_slot', 'Für Slot {slot} wurde noch kein Hostname/IP eingetragen.', slot=slot)}</p>"
+                f"<p><a style='color:#3b82f6' href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+            ),
+            status=400,
         )
 
     ok, ip = is_http_reachable(host, timeout_s=0.8)
     if not ok:
-        return (
-            "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-            "<h1>WLED nicht erreichbar</h1>"
-            "<p>Sie haben kein offizielles LED Band mit Controller im Einsatz, oder der Controller ist aktuell nicht verbunden.</p>"
-            f"<p>Host: <code>{host}</code></p>"
-            f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            503,
+        return _inline_notice_page(
+            t("wled.unreachable_title", "WLED nicht erreichbar"),
+            (
+                f"<p>{t('wled.unreachable_text', 'Sie haben kein offizielles LED Band mit Controller im Einsatz, oder der Controller ist aktuell nicht verbunden.')}</p>"
+                f"<p>{t('wled.host_label', 'Host')}: <code>{host}</code></p>"
+                f"<p><a style='color:#3b82f6' href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+            ),
+            status=503,
         )
 
     target = ip or host
@@ -4496,7 +6072,7 @@ def wled_save_targets():
     save_wled_config(cfg)
 
     # Service handling + -WEPS Update
-    msg_parts = ["WLED Targets gespeichert."]
+    msg_parts = [t("wled.targets_saved", "WLED Targets gespeichert.")]
     ok = True
 
     if service_exists(DARTS_WLED_SERVICE):
@@ -4506,9 +6082,9 @@ def wled_save_targets():
         if (not master) or (not hosts):
             service_disable_now(DARTS_WLED_SERVICE)
             if not master:
-                msg_parts.append("WLED ist deaktiviert → darts-wled wurde gestoppt.")
+                msg_parts.append(t("wled.disabled_service_stopped", "WLED ist deaktiviert → darts-wled wurde gestoppt."))
             else:
-                msg_parts.append("Kein Target aktiv → darts-wled wurde gestoppt.")
+                msg_parts.append(t("wled.no_target_service_stopped", "Kein Target aktiv → darts-wled wurde gestoppt."))
         else:
             ok_weps, msg_weps = update_darts_wled_start_custom_weps(hosts)
             msg_parts.append(msg_weps)
@@ -4536,12 +6112,12 @@ def wled_toggle():
     if service_exists(DARTS_WLED_SERVICE):
         if not new_master:
             service_disable_now(DARTS_WLED_SERVICE)
-            msg_parts.append("WLED deaktiviert (merkt sich das nach Neustart). darts-wled wurde gestoppt.")
+            msg_parts.append(t("wled.toggle_disabled_service_stopped", "WLED deaktiviert (merkt sich das nach Neustart). darts-wled wurde gestoppt."))
         else:
             hosts = get_enabled_wled_hosts(cfg)
             if hosts:
                 ok_weps, msg_weps = update_darts_wled_start_custom_weps(hosts)
-                msg_parts.append("WLED aktiviert (merkt sich das nach Neustart).")
+                msg_parts.append(t("wled.toggle_enabled", "WLED aktiviert (merkt sich das nach Neustart)."))
                 msg_parts.append(msg_weps)
                 if ok_weps:
                     service_enable_now(DARTS_WLED_SERVICE)
@@ -4550,9 +6126,9 @@ def wled_toggle():
                     ok = False
             else:
                 service_disable_now(DARTS_WLED_SERVICE)
-                msg_parts.append("WLED aktiviert, aber kein Target aktiv → darts-wled bleibt aus.")
+                msg_parts.append(t("wled.enabled_but_no_target", "WLED aktiviert, aber kein Target aktiv → darts-wled bleibt aus."))
     else:
-        msg_parts.append("WLED Toggle gespeichert (Service nicht gefunden).")
+        msg_parts.append(t("wled.toggle_saved_service_missing", "WLED Toggle gespeichert (Service nicht gefunden)."))
 
     return redirect(url_for("index", ledcheck=("ok" if ok else "bad"), ledmsg="\n".join(msg_parts)))
 
@@ -4563,7 +6139,7 @@ def wled_toggle():
 def wled_set_enabled(slot: int):
     # User-UI: Slot 1..3
     if slot < 1 or slot > 3:
-        return jsonify({"ok": False, "msg": "Ungültiger Slot."}), 400
+        return jsonify({"ok": False, "msg": t("generic.invalid_slot", "Ungültiger Slot.")}), 400
 
     enabled = request.form.get("enabled") == "1"
     cfg = load_wled_config()
@@ -4711,6 +6287,53 @@ def api_wifi_signal():
         iface = WIFI_INTERFACE
     return jsonify({"signal": sig, "iface": iface})
 
+
+def _load_ap_client_internet_status():
+    """Liest den Status der AP-Internetfreigabe für verbundene Geräte."""
+    data = {
+        "status": "red",
+        "client_internet": False,
+        "ap_active": False,
+        "forwarding_ready": False,
+        "pi_online": False,
+        "uplinks": [],
+        "note": t("ap_internet.status_file_missing", "Statusdatei nicht gefunden"),
+    }
+    try:
+        with open(AP_INTERNET_STATUS_PATH, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        if not isinstance(raw, dict):
+            return data
+        status = str(raw.get("status") or "").strip().lower()
+        pi_online = bool(raw.get("pi_online", False))
+        forwarding_ready = bool(raw.get("forwarding_ready", False))
+        ap_active = bool(raw.get("ap_active", False))
+        client_internet = bool(status == "green" and pi_online and forwarding_ready and ap_active)
+        note = (
+            t("ap_internet.clients_online", "AP-Clients haben Internet")
+            if client_internet
+            else t("ap_internet.clients_offline", "AP-Clients haben aktuell kein Internet")
+        )
+        return {
+            "status": "green" if client_internet else "red",
+            "client_internet": client_internet,
+            "ap_active": ap_active,
+            "forwarding_ready": forwarding_ready,
+            "pi_online": pi_online,
+            "uplinks": raw.get("uplinks") if isinstance(raw.get("uplinks"), list) else [],
+            "note": note,
+        }
+    except Exception:
+        return data
+
+
+@app.route("/api/ap-client-internet-status", methods=["GET"])
+def api_ap_client_internet_status():
+    st = _load_ap_client_internet_status()
+    st["ok"] = True
+    return jsonify(st)
+
+
 @app.route("/api/wled/status", methods=["GET"])
 def api_wled_status():
     cfg = load_wled_config()
@@ -4748,7 +6371,7 @@ def api_wled_status():
 @app.route("/api/pi_monitor/status", methods=["GET"])
 def api_pi_monitor_status():
     if not bool(session.get("admin_unlocked", False)):
-        return jsonify({"ok": False, "msg": "Admin gesperrt."}), 403
+        return jsonify({"ok": False, "msg": t("admin.locked", "Admin gesperrt.")}), 403
     st = get_pi_monitor_status()
     st["ok"] = True
     return jsonify(st)
@@ -4757,7 +6380,7 @@ def api_pi_monitor_status():
 @app.route("/api/pi_monitor/start", methods=["POST"])
 def api_pi_monitor_start():
     if not bool(session.get("admin_unlocked", False)):
-        return jsonify({"ok": False, "msg": "Admin gesperrt."}), 403
+        return jsonify({"ok": False, "msg": t("admin.locked", "Admin gesperrt.")}), 403
     data = request.get_json(silent=True) or {}
     try:
         interval_s = int(data.get("interval_s") or 10)
@@ -4773,7 +6396,7 @@ def api_pi_monitor_start():
 @app.route("/api/pi_monitor/stop", methods=["POST"])
 def api_pi_monitor_stop():
     if not bool(session.get("admin_unlocked", False)):
-        return jsonify({"ok": False, "msg": "Admin gesperrt."}), 403
+        return jsonify({"ok": False, "msg": t("admin.locked", "Admin gesperrt.")}), 403
     res = stop_pi_monitor()
     if not res.get("ok"):
         return jsonify(res), 400
@@ -4799,8 +6422,8 @@ def admin_lock():
 @app.route("/admin/reboot", methods=["POST"])
 def admin_reboot():
     # Nur im Admin-Modus erlauben
-    if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+    #if not bool(session.get("admin_unlocked", False)):
+        #return _forbidden_response()
 
     unit_name = f"autodarts-reboot-{int(time.time())}"
 
@@ -4822,14 +6445,14 @@ def admin_reboot():
         except Exception:
             pass
 
-    return (
-        "<!doctype html><html lang='de'><head><meta charset='utf-8'>"
-        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        "<title>Reboot</title></head><body style='font-family:system-ui;background:#111;color:#eee;padding:20px;'>"
-        "<h2>Neustart wird ausgeführt…</h2>"
-        "<p>Der Raspberry Pi startet jetzt neu. Diese Seite ist gleich nicht mehr erreichbar.</p>"
-        "</body></html>"
-    )
+    return _inline_notice_page(
+        t("admin.reboot_title", "Reboot"),
+        (
+            f"<h2>{t('admin.reboot_running', 'Neustart wird ausgeführt…')}</h2>"
+            f"<p>{t('admin.reboot_running_text', 'Der Raspberry Pi startet jetzt neu. Diese Seite ist gleich nicht mehr erreichbar.')}</p>"
+        ),
+        html_lang=_get_current_lang_code(),
+    )[0]
 
 
 
@@ -4839,8 +6462,8 @@ def admin_reboot():
 @app.route("/admin/shutdown", methods=["POST"])
 def admin_shutdown():
     # Nur im Admin-Modus erlauben
-    if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+    #if not bool(session.get("admin_unlocked", False)):
+        #return _forbidden_response()
 
     unit_name = f"autodarts-shutdown-{int(time.time())}"
 
@@ -4860,20 +6483,20 @@ def admin_shutdown():
         except Exception:
             pass
 
-    return (
-        "<!doctype html><html lang='de'><head><meta charset='utf-8'>"
-        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        "<title>Herunterfahren</title></head><body style='font-family:system-ui;background:#111;color:#eee;padding:20px;'>"
-        "<h2>Herunterfahren wird ausgeführt…</h2>"
-        "<p>Der Raspberry Pi fährt jetzt sauber herunter. Diese Seite ist gleich nicht mehr erreichbar.</p>"
-        "</body></html>"
-    )
+    return _inline_notice_page(
+        t("admin.shutdown_title", "Herunterfahren"),
+        (
+            f"<h2>{t('admin.shutdown_running', 'Herunterfahren wird ausgeführt…')}</h2>"
+            f"<p>{t('admin.shutdown_running_text', 'Der Raspberry Pi fährt jetzt sauber herunter. Diese Seite ist gleich nicht mehr erreichbar.')}</p>"
+        ),
+        html_lang=_get_current_lang_code(),
+    )[0]
 
 
 @app.route("/admin/pi-monitor/download/<kind>", methods=["GET"])
 def admin_pi_monitor_download(kind: str):
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     kind = (kind or "").strip().lower()
     mapping = {
@@ -4883,11 +6506,11 @@ def admin_pi_monitor_download(kind: str):
     }
     entry = mapping.get(kind)
     if not entry:
-        return ("Unbekannter Download.", 404)
+        return (t("downloads.unknown_download", "Unbekannter Download."), 404)
 
     path, download_name, mimetype = entry
     if not os.path.exists(path):
-        return (f"Datei nicht gefunden: {path}", 404)
+        return (t("downloads.file_not_found", "Datei nicht gefunden: {path}", path=path), 404)
 
     return send_file(path, mimetype=mimetype, as_attachment=True, download_name=download_name)
 
@@ -4895,7 +6518,7 @@ def admin_pi_monitor_download(kind: str):
 @app.route("/admin/pi-monitor/tail", methods=["GET"])
 def admin_pi_monitor_tail():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     source = (request.args.get("source") or "csv").strip().lower()
     if source == "outlog":
@@ -4912,7 +6535,7 @@ def admin_pi_monitor_tail():
     n = max(1, min(5000, n))
 
     if not os.path.exists(path):
-        return Response(f"Datei nicht gefunden: {path}\n", status=404, mimetype="text/plain")
+        return Response(t("downloads.file_not_found", "Datei nicht gefunden: {path}", path=path) + "\n", status=404, mimetype="text/plain")
 
     text = tail_file(path, n=n, max_chars=400000)
     if not text:
@@ -4927,7 +6550,7 @@ def admin_pi_monitor_tail():
 @app.route("/admin/os/update", methods=["POST"])
 def admin_os_update():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     ok, msg = start_os_update_background()
     return redirect(url_for("index", admin="1", adminok=("1" if ok else "0"), adminmsg=msg) + "#admin_details")
@@ -4940,17 +6563,17 @@ def admin_os_update():
 @app.route("/admin/ufw/refresh", methods=["POST"])
 def admin_ufw_refresh():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
     ufw_refresh_state()
-    return redirect(url_for("index", admin="1", adminmsg="Firewall-Status aktualisiert.", adminok="1") + "#admin_details")
+    return redirect(url_for("index", admin="1", adminmsg=t("ufw.status_refreshed", "Firewall-Status aktualisiert."), adminok="1") + "#admin_details")
 
 
 @app.route("/admin/ufw/install", methods=["POST"])
 def admin_ufw_install():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
     if ufw_is_installed():
-        return redirect(url_for("index", admin="1", adminmsg="UFW ist bereits installiert.", adminok="1") + "#admin_details")
+        return redirect(url_for("index", admin="1", adminmsg=t("ufw.already_installed", "UFW ist bereits installiert."), adminok="1") + "#admin_details")
     ok, msg = start_ufw_install_background()
     return redirect(url_for("index", admin="1", adminmsg=msg, adminok=("1" if ok else "0")) + "#admin_details")
 
@@ -4958,36 +6581,36 @@ def admin_ufw_install():
 @app.route("/admin/ufw/apply_ports", methods=["POST"])
 def admin_ufw_apply_ports():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
     ok, msg = ufw_apply_port_rules()
     # Status NICHT automatisch prüfen – wir aktualisieren nur den Cache (Button ist explizit)
     ufw_refresh_state()
-    short = (msg.splitlines()[0] if msg else ("OK" if ok else "Fehler"))
+    short = (msg.splitlines()[0] if msg else (t("generic.ok", "OK") if ok else t("generic.error", "Fehler")))
     return redirect(url_for("index", admin="1", adminmsg=short, adminok=("1" if ok else "0")) + "#admin_details")
 
 
 @app.route("/admin/ufw/enable", methods=["POST"])
 def admin_ufw_enable():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
     ok, msg = ufw_set_enabled(True)
     ufw_refresh_state()
-    short = (msg.splitlines()[0] if msg else ("OK" if ok else "Fehler"))
+    short = (msg.splitlines()[0] if msg else (t("generic.ok", "OK") if ok else t("generic.error", "Fehler")))
     return redirect(url_for("index", admin="1", adminmsg=short, adminok=("1" if ok else "0")) + "#admin_details")
 
 
 @app.route("/admin/ufw/disable", methods=["POST"])
 def admin_ufw_disable():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
     ok, msg = ufw_set_enabled(False)
     ufw_refresh_state()
-    short = (msg.splitlines()[0] if msg else ("OK" if ok else "Fehler"))
+    short = (msg.splitlines()[0] if msg else (t("generic.ok", "OK") if ok else t("generic.error", "Fehler")))
     return redirect(url_for("index", admin="1", adminmsg=short, adminok=("1" if ok else "0")) + "#admin_details")
 @app.route("/admin/autodarts/check", methods=["POST"])
 def admin_autodarts_check():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     installed = get_autodarts_version()
     latest = fetch_latest_autodarts_version()
@@ -5002,11 +6625,11 @@ def admin_autodarts_check():
 
     if installed and latest:
         if installed == latest:
-            msg = f"Kein Update verfügbar (bereits v{installed})."
+            msg = t("autodarts.no_update_available", "Kein Update verfügbar (bereits v{installed}).", installed=installed)
         else:
-            msg = f"Update verfügbar: v{installed} → v{latest}."
+            msg = t("autodarts.update_available", "Update verfügbar: v{installed} → v{latest}.", installed=installed, latest=latest)
     else:
-        msg = "Update-Check nicht möglich (Version oder Internet nicht verfügbar)."
+        msg = t("autodarts.update_check_unavailable", "Update-Check nicht möglich (Version oder Internet nicht verfügbar).")
 
     return redirect(url_for("index", admin="1", adminmsg=msg, adminok="1") + "#admin_details")
 
@@ -5014,14 +6637,14 @@ def admin_autodarts_check():
 @app.route("/admin/autodarts/update", methods=["POST"])
 def admin_autodarts_update():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     installed = get_autodarts_version()
     latest = fetch_latest_autodarts_version()
 
     # Wenn wir sicher wissen, dass es kein Update gibt → nicht starten
     if installed and latest and installed == latest:
-        msg = f"Kein Update verfügbar (bereits v{installed})."
+        msg = t("autodarts.no_update_available", "Kein Update verfügbar (bereits v{installed}).", installed=installed)
         return redirect(url_for("index", admin="1", adminok="1", adminmsg=msg) + "#admin_details")
 
     ok, msg = start_autodarts_update_background()
@@ -5031,8 +6654,8 @@ def admin_autodarts_update():
 @app.route("/admin/webpanel/check", methods=["POST"])
 def admin_webpanel_check():
     # Admin muss entsperrt sein
-    if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+    #if not bool(session.get("admin_unlocked", False)):
+        #return _forbidden_response()
 
     installed = get_webpanel_version()
     latest = fetch_latest_webpanel_version()
@@ -5044,70 +6667,73 @@ def admin_webpanel_check():
     })
 
     if latest and installed and installed == latest:
-        flash("Webpanel: Kein Update verfügbar.", "info")
+        msg = t("webpanel.no_update", "Webpanel: Kein Update verfügbar.")
+        ok = "1"
     elif latest:
-        flash(f"Webpanel: Update verfügbar ({installed or 'unknown'} → {latest}).", "success")
+        msg = t("webpanel.update_available", "Webpanel: Update verfügbar ({installed} → {latest}).", installed=(installed or "unknown"), latest=latest)
+        ok = "1"
     else:
-        flash("Webpanel: Update-Check fehlgeschlagen.", "warning")
+        msg = t("webpanel.update_check_failed", "Webpanel: Update-Check fehlgeschlagen.")
+        ok = "0"
 
-    return redirect(url_for("index", admin="1") + "#admin_details")
+    return redirect(url_for("index", admin="1", adminmsg=msg, adminok=ok) + "#admin_details")
 
 
 @app.route("/admin/webpanel/update", methods=["POST"])
 def admin_webpanel_update():
     # Admin muss entsperrt sein
-    if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+    #if not bool(session.get("admin_unlocked", False)):
+        #return _forbidden_response()
 
     installed = get_webpanel_version()
     latest = fetch_latest_webpanel_version()
 
     # Wenn latest nicht ermittelbar: erst prüfen lassen
     if not latest:
-        flash("Webpanel: Konnte 'latest' nicht ermitteln – bitte zuerst 'Update prüfen'.", "warning")
-        return redirect(url_for("index", admin="1") + "#admin_details")
+        msg = t("webpanel.latest_not_determined", "Webpanel: Konnte 'latest' nicht ermitteln – bitte zuerst 'Update prüfen'.")
+        return redirect(url_for("index", admin="1", adminmsg=msg, adminok="0") + "#admin_details")
 
     if installed and installed == latest:
-        flash("Webpanel: Kein Update verfügbar.", "info")
-        return redirect(url_for("index", admin="1") + "#admin_details")
+        msg = t("webpanel.no_update", "Webpanel: Kein Update verfügbar.")
+        return redirect(url_for("index", admin="1", adminmsg=msg, adminok="1") + "#admin_details")
 
     ok, err = start_webpanel_update_background()
     if ok:
-        flash("Webpanel-Update gestartet. Die Weboberfläche kann kurz neu starten.", "success")
+        msg = t("webpanel.update_started", "Webpanel-Update gestartet. Die Weboberfläche kann kurz neu starten.")
     else:
-        flash(f"Webpanel-Update konnte nicht gestartet werden: {err or 'unbekannt'}.", "danger")
+        msg = t("webpanel.update_start_failed", "Webpanel-Update konnte nicht gestartet werden: {error}.", error=(err or t("generic.unknown", "unbekannt")))
 
-    return redirect(url_for("index", admin="1") + "#admin_details")
+    return redirect(url_for("index", admin="1", adminmsg=msg, adminok=("1" if ok else "0")) + "#admin_details")
 
 
 
 @app.route("/admin/webpanel/uvc-install", methods=["POST"])
 def admin_webpanel_uvc_install():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     info = get_uvc_backup_info()
     if (not info.get("backup_exists")) and info.get("marker_exists"):
-        msg = f"UVC Hack nicht gestartet: Kein Original-Backup vorhanden, aber alter UVC-Marker gefunden. Bitte Backup nach {info.get('backup_dir')} kopieren."
+        msg = t("webpanel.uvc_hack_not_started_backup_missing", "UVC Hack nicht gestartet: Kein Original-Backup vorhanden, aber alter UVC-Marker gefunden. Bitte Backup nach {path} kopieren.", path=info.get("backup_dir"))
         return redirect(url_for("index", admin="1", adminok="0", adminmsg=msg) + "#admin_details")
 
     ok, err = start_webpanel_update_background(mode="uvc-hack", allow_self_update=False)
-    msg = "UVC Hack gestartet. Bitte danach kurz das Webpanel-Log prüfen." if ok else f"UVC Hack konnte nicht gestartet werden: {err or 'unbekannt'}."
+    msg = t("webpanel.uvc_hack_started", "UVC Hack gestartet. Bitte danach kurz das Webpanel-Log prüfen.") if ok else t("webpanel.uvc_hack_start_failed", "UVC Hack konnte nicht gestartet werden: {error}.", error=(err or t("generic.unknown", "unbekannt")))
     return redirect(url_for("index", admin="1", adminok=("1" if ok else "0"), adminmsg=msg) + "#admin_details")
 
 
 @app.route("/admin/webpanel/uvc-uninstall", methods=["POST"])
 def admin_webpanel_uvc_uninstall():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     info = get_uvc_backup_info()
     if not info.get("backup_exists"):
-        msg = f"UVC Hack wurde NICHT deinstalliert: Kein lokales Original-Backup vorhanden. Bitte Backup nach {info.get('backup_dir')} kopieren."
+        msg = t("webpanel.uvc_uninstall_not_started_backup_missing", "UVC Hack wurde NICHT deinstalliert: Kein lokales Original-Backup vorhanden. Bitte Backup nach {path} kopieren.", path=info.get("backup_dir"))
         return redirect(url_for("index", admin="1", adminok="0", adminmsg=msg) + "#admin_details")
 
     ok, err = start_webpanel_update_background(mode="uvc-uninstall", allow_self_update=False)
-    msg = "UVC Deinstallation gestartet. Der Mini PC startet danach automatisch neu." if ok else f"UVC Deinstallation konnte nicht gestartet werden: {err or 'unbekannt'}."
+    msg = t("webpanel.uvc_uninstall_started", "UVC Deinstallation gestartet. Der Mini PC startet danach automatisch neu.") if ok else t("webpanel.uvc_uninstall_start_failed", "UVC Deinstallation konnte nicht gestartet werden: {error}.", error=(err or t("generic.unknown", "unbekannt")))
     return redirect(url_for("index", admin="1", adminok=("1" if ok else "0"), adminmsg=msg) + "#admin_details")
 
 
@@ -5115,7 +6741,7 @@ def admin_webpanel_uvc_uninstall():
 def admin_wled_update():
     # Admin muss entsperrt sein
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     ok, msg = start_extensions_update_background("all")
     return redirect(url_for("index", admin="1", adminok=("1" if ok else "0"), adminmsg=(msg or "")) + "#admin_details")
@@ -5126,17 +6752,17 @@ def admin_wled_update():
 @app.route("/admin/gpio-image", methods=["GET"])
 def admin_gpio_image():
     if not bool(session.get("admin_unlocked", False)):
-        return ("Forbidden", 403)
+        return _forbidden_response()
 
     if os.path.exists(ADMIN_GPIO_IMAGE):
         return send_file(ADMIN_GPIO_IMAGE, mimetype="image/jpeg")
-    return (
-        "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-        "<h1>GPIO Bild nicht gefunden</h1>"
-        f"<p>Datei fehlt: <code>{ADMIN_GPIO_IMAGE}</code></p>"
-        f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-        "</body></html>",
-        404,
+    return _inline_notice_page(
+        t("admin.gpio_image_missing_title", "GPIO Bild nicht gefunden"),
+        (
+            f"<p>{t('downloads.file_missing', 'Datei fehlt')}: <code>{ADMIN_GPIO_IMAGE}</code></p>"
+            f"<p><a style='color:#3b82f6' href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+        ),
+        status=404,
     )
 
 
@@ -5155,6 +6781,9 @@ def set_cams():
     cfg["desired_cams"] = len(cameras)
     cfg["devices"] = _devices_for_slots(cameras, slots)
     save_cam_config(cfg)
+
+    if not cameras:
+        return redirect(url_for("index", msg=t("camera.none_connected", "Keine Kamera erkannt. Bitte Kamera anschließen und erneut versuchen.")))
 
     return redirect(url_for("index"))
 
@@ -5202,10 +6831,7 @@ def set_cam_slot(slot_id: int):
 
 @app.route("/camera-mode/start", methods=["POST"])
 def camera_mode_start():
-    """Kamera-Einstellung starten: Autodarts stoppen, Streams stoppen, Flag setzen."""
-    subprocess.run(["systemctl", "stop", AUTODARTS_SERVICE], capture_output=True, text=True)
-    subprocess.run(["pkill", "-f", "mjpg_streamer"], capture_output=True, text=True)
-
+    """Kamera-Einstellung starten: Nur bei gefundener Kamera in den Einstellmodus wechseln."""
     cfg = load_cam_config()
     cameras = detect_camera_inventory(MAX_CAMERAS)
     slots = _normalize_camera_slots(cameras, cfg.get("camera_slots"))
@@ -5213,6 +6839,15 @@ def camera_mode_start():
     cfg["camera_slots"] = slots
     cfg["desired_cams"] = len(cameras)
     cfg["devices"] = _devices_for_slots(cameras, slots)
+
+    if not cameras:
+        _set_camera_mode_state(cfg, False)
+        save_cam_config(cfg)
+        return redirect(url_for("index", msg=t("camera.none_connected", "Keine Kamera erkannt. Bitte Kamera anschließen und erneut versuchen.")))
+
+    subprocess.run(["systemctl", "stop", AUTODARTS_SERVICE], capture_output=True, text=True)
+    subprocess.run(["pkill", "-f", "mjpg_streamer"], capture_output=True, text=True)
+
     _set_camera_mode_state(cfg, True)
     save_cam_config(cfg)
 
@@ -5276,12 +6911,12 @@ def api_wifi_scan():
             timeout=8,
         )
     except subprocess.TimeoutExpired:
-        return jsonify(ok=False, msg="WLAN-Scan dauert zu lange (Timeout). Bitte erneut versuchen."), 504
+        return jsonify(ok=False, msg=t("wifi.scan_timeout", "WLAN-Scan dauert zu lange (Timeout). Bitte erneut versuchen.")), 504
     except Exception as e:
-        return jsonify(ok=False, msg=f"WLAN-Scan fehlgeschlagen: {e}"), 500
+        return jsonify(ok=False, msg=t("wifi.scan_failed1", "WLAN-Scan fehlgeschlagen: {error}", error=e)), 500
 
     if r.returncode != 0:
-        return jsonify(ok=False, msg="nmcli Fehler: " + interpret_nmcli_error(r.stdout, r.stderr)), 500
+        return jsonify(ok=False, msg=t("wifi.nmcli_error", "nmcli Fehler: {error}", error=interpret_nmcli_error(r.stdout, r.stderr))), 500
 
     # Merge duplicate SSIDs: keep best signal, combine security labels
     merged: dict[str, dict] = {}
@@ -5336,7 +6971,7 @@ def wifi():
         password = request.form.get("password", "").strip()
 
         if not ssid:
-            message = "Bitte WLAN-Namen (SSID) eingeben."
+            message = t("wifi.enter_ssid", "Bitte WLAN-Namen (SSID) eingeben.")
         else:
             # 1) Nur den WLAN-USB-Dongle weich zurücksetzen
             soft_reset_wifi_dongle()
@@ -5368,7 +7003,7 @@ def wifi():
             )
 
             if add.returncode != 0:
-                message = "Fehler beim Anlegen der WLAN-Verbindung: " + interpret_nmcli_error(add.stdout, add.stderr)
+                message = t("wifi.create_connection_failed", "Fehler beim Anlegen der WLAN-Verbindung: {error}", error=interpret_nmcli_error(add.stdout, add.stderr))
             else:
                 # 4) Passwort + IP-Konfiguration setzen
                 subprocess.run(
@@ -5408,7 +7043,7 @@ def wifi():
                 )
 
                 if up.returncode == 0:
-                    message = "Erfolgreich mit WLAN verbunden."
+                    message = t("wifi.connected_successfully", "Erfolgreich mit WLAN verbunden.")
                     success = True
                 else:
                     err_text_full = (up.stderr or up.stdout or "")
@@ -5432,30 +7067,29 @@ def wifi():
                         )
 
                         if up2.returncode == 0:
-                            message = (
-                                "Verbindung fehlgeschlagen, wird erneut versucht ...\n"
-                                "Der zweite Versuch war erfolgreich. "
-                                "(Hinweis: WLAN-USB-Stick wurde kurz neu initialisiert.)"
+                            message = t(
+                                "wifi.retry_success_after_reset",
+                                "Verbindung fehlgeschlagen, wird erneut versucht ...\nDer zweite Versuch war erfolgreich. (Hinweis: WLAN-USB-Stick wurde kurz neu initialisiert.)"
                             )
                             success = True
                         else:
-                            message = (
-                                "Verbindung fehlgeschlagen, wird erneut versucht ...\n"
-                                "Auch der zweite Versuch ist fehlgeschlagen: "
-                                + interpret_nmcli_error(up2.stdout, up2.stderr)
+                            message = t(
+                                "wifi.retry_failed_after_reset",
+                                "Verbindung fehlgeschlagen, wird erneut versucht ...\nAuch der zweite Versuch ist fehlgeschlagen: {error}",
+                                error=interpret_nmcli_error(up2.stdout, up2.stderr),
                             )
                     else:
-                        message = "Verbindung konnte nicht hergestellt werden: " + interpret_nmcli_error(up.stdout, up.stderr)
+                        message = t("wifi.connect_failed", "Verbindung konnte nicht hergestellt werden: {error}", error=interpret_nmcli_error(up.stdout, up.stderr))
 
     # Aktuellen Status des WLAN-Dongles anzeigen
     ssid_cur, ip_cur = get_wifi_status()
     wifi_signal = get_wifi_signal_percent()
     if ssid_cur and ip_cur:
-        current_info = f"Aktuell verbunden mit <strong>{ssid_cur}</strong> (IP {ip_cur})" + (f" · Signal: <strong>{wifi_signal}%</strong>." if wifi_signal is not None else "." )
+        current_info = t("wifi.current_info_connected", "Aktuell verbunden mit <strong>{ssid}</strong> (IP {ip})", ssid=ssid_cur, ip=ip_cur) + (t("wifi.current_info_signal", " · Signal: <strong>{signal}%</strong>.", signal=wifi_signal) if wifi_signal is not None else ".")
     elif ssid_cur and not ip_cur:
-        current_info = f"WLAN verbunden mit <strong>{ssid_cur}</strong>, aber es wurde keine IPv4-Adresse vergeben." + (f" (Signal: <strong>{wifi_signal}%</strong>)" if wifi_signal is not None else "")
+        current_info = t("wifi.current_info_connected_no_ipv4", "WLAN verbunden mit <strong>{ssid}</strong>, aber es wurde keine IPv4-Adresse vergeben.", ssid=ssid_cur) + (t("wifi.current_info_signal_paren", " (Signal: <strong>{signal}%</strong>)", signal=wifi_signal) if wifi_signal is not None else "")
     else:
-        current_info = "Der USB-Dongle ist aktuell mit keinem WLAN verbunden."
+        current_info = t("wifi.current_info_not_connected", "Der USB-Dongle ist aktuell mit keinem WLAN verbunden.")
 
     return render_template(
         "wifi.html",
@@ -5524,13 +7158,13 @@ def get_active_wifi_autoconnect_state() -> tuple[str | None, bool | None]:
 def wifi_autoconnect(mode: str):
     # Schutz: nur im Admin-Modus
     if not bool(session.get("admin_unlocked", False)):
-        flash("Bitte zuerst im Admin-Bereich entsperren.", "warning")
+        flash(t("admin.unlock_first", "Bitte zuerst im Admin-Bereich entsperren."), "warning")
         return redirect(url_for("index", admin="1") + "#admin_details")
 
     enable = (mode or "").lower() in ("on", "enable", "yes", "1", "true")
     conn = _active_wifi_connection_name(WIFI_INTERFACE)
     if not conn:
-        flash("Kein aktives WLAN-Profil auf dem Internet-WLAN-Interface gefunden.", "warning")
+        flash(t("wifi.no_active_profile_on_uplink", "Kein aktives WLAN-Profil auf dem Internet-WLAN-Interface gefunden."), "warning")
         return redirect(url_for("wifi"))
 
     try:
@@ -5539,12 +7173,12 @@ def wifi_autoconnect(mode: str):
             cmd = ["sudo", "-n"] + cmd
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=6.0)
         if r.returncode == 0:
-            flash(f"Autoconnect {'aktiviert' if enable else 'deaktiviert'} für: {conn}", "success")
+            flash(t("wifi.autoconnect_set", "Autoconnect {state} für: {conn}", state=(t("generic.enabled", "aktiviert") if enable else t("generic.disabled", "deaktiviert")), conn=conn), "success")
         else:
             err = (r.stderr or r.stdout or "").strip()
-            flash(f"Autoconnect konnte nicht gesetzt werden: {err or 'unbekannt'}", "danger")
+            flash(t("wifi.autoconnect_set_failed", "Autoconnect konnte nicht gesetzt werden: {error}", error=(err or t("generic.unknown", "unbekannt"))), "danger")
     except Exception as e:
-        flash(f"Autoconnect Fehler: {e}", "danger")
+        flash(t("wifi.autoconnect_error", "Autoconnect Fehler: {error}", error=e), "danger")
 
     return redirect(url_for("wifi"))
 
@@ -5553,7 +7187,7 @@ def wifi_autoconnect(mode: str):
 def wifi_forget_saved():
     # Schutz: nur im Admin-Modus
     if not bool(session.get("admin_unlocked", False)):
-        flash("Bitte zuerst im Admin-Bereich entsperren.", "warning")
+        flash(t("admin.unlock_first", "Bitte zuerst im Admin-Bereich entsperren."), "warning")
         return redirect(url_for("index", admin="1") + "#admin_details")
 
     KEEP = "Autodarts-AP"
@@ -5588,11 +7222,11 @@ def wifi_forget_saved():
             deleted.append(name)
 
         if deleted:
-            flash("Gespeicherte WLAN-Verbindungen gelöscht: " + ", ".join(deleted), "success")
+            flash(t("wifi.saved_connections_deleted", "Gespeicherte WLAN-Verbindungen gelöscht: {names}", names=", ".join(deleted)), "success")
         else:
-            flash("Keine gespeicherten WLAN-Verbindungen gefunden (außer Autodarts-AP).", "info")
+            flash(t("wifi.no_saved_connections_found", "Keine gespeicherten WLAN-Verbindungen gefunden (außer Autodarts-AP)."), "info")
     except Exception as e:
-        flash(f"Konnte gespeicherte WLANs nicht löschen: {e}", "danger")
+        flash(t("wifi.delete_saved_connections_failed", "Konnte gespeicherte WLANs nicht löschen: {error}", error=e), "danger")
 
     return redirect(url_for("wifi"))
 @app.route("/autoupdate/toggle", methods=["POST"])
@@ -5600,7 +7234,7 @@ def autoupdate_toggle():
     """Legacy Toggle (für alte Links)."""
     cur = autodarts_autoupdate_is_enabled()
     if cur is None:
-        return redirect(url_for("index", msg="Auto-Update Service nicht gefunden."))
+        return redirect(url_for("index", msg=t("autoupdate.service_not_found", "Auto-Update Service nicht gefunden.")))
     ok, msg = autodarts_set_autoupdate(not bool(cur))
     return redirect(url_for("index", msg=msg))
 
@@ -5614,7 +7248,7 @@ def autoupdate_set(mode: str):
     elif mode in ("off", "disable", "0", "false"):
         desired = False
     else:
-        return redirect(url_for("index", msg="Ungültiger Modus.", open_adver="1") + "#ad-version")
+        return redirect(url_for("index", msg=t("generic.invalid_mode", "Ungültiger Modus."), open_adver="1") + "#ad-version")
 
     cur = autodarts_autoupdate_is_enabled()
 
@@ -5625,7 +7259,7 @@ def autoupdate_set(mode: str):
 
     # AN
     if cur is True:
-        return redirect(url_for("index", msg="Auto-Update ist bereits AN.", open_adver="1") + "#ad-version")
+        return redirect(url_for("index", msg=t("autoupdate.already_on", "Auto-Update ist bereits AN."), open_adver="1") + "#ad-version")
     if cur is False:
         ok, msg = autodarts_set_autoupdate(True)
         return redirect(url_for("index", msg=msg, open_adver="1") + "#ad-version")
@@ -5650,7 +7284,7 @@ def autoupdate_set(mode: str):
         disable_autoupdate_after=False,
     )
     if ok:
-        return redirect(url_for("index", msg="Aktivierung gestartet (Installer erstellt Auto-Update Service)."))
+        return redirect(url_for("index", msg=t("autoupdate.activation_started", "Aktivierung gestartet (Installer erstellt Auto-Update Service).")))
     return redirect(url_for("index", msg=_m))
 
 
@@ -5668,7 +7302,7 @@ def autodarts_install_version():
 
     v_raw = (request.form.get("version") or "").strip()
     if not v_raw:
-        return redirect(url_for("index", msg="Bitte eine Version auswählen.", open_adver="1") + "#ad-version")
+        return redirect(url_for("index", msg=t("autodarts.select_version", "Bitte eine Version auswählen."), open_adver="1") + "#ad-version")
 
     stable = autodarts_stable_from_menu()
 
@@ -5678,14 +7312,14 @@ def autodarts_install_version():
     # "stable" => erste SemVer aus Liste
     if v_raw.lower() == "stable":
         if not stable:
-            return redirect(url_for("index", msg="Keine stabile Version hinterlegt. Bitte oben in AUTODARTS_VERSION_MENU eine feste Version (z.B. 1.0.4) eintragen.", open_adver="1") + "#ad-version")
+            return redirect(url_for("index", msg=t("autodarts.no_stable_version_defined", "Keine stabile Version hinterlegt. Bitte oben in AUTODARTS_VERSION_MENU eine feste Version (z.B. 1.0.4) eintragen."), open_adver="1") + "#ad-version")
         selected = stable
         req_label = f"Stabil ({stable})"
     else:
         # Nur freigegebene Dropdown-Werte erlauben
         allowed = {str(opt.get("value")) for opt in get_autodarts_versions_choices()}
         if v_raw not in allowed:
-            return redirect(url_for("index", msg="Diese Version ist nicht freigegeben. Bitte über das Dropdown auswählen.", open_adver="1") + "#ad-version")
+            return redirect(url_for("index", msg=t("autodarts.version_not_allowed", "Diese Version ist nicht freigegeben. Bitte über das Dropdown auswählen."), open_adver="1") + "#ad-version")
 
         selected = v_raw
         if selected in ("__LATEST__", "__LAST__"):
@@ -5693,13 +7327,13 @@ def autodarts_install_version():
 
         if special == "__LATEST__":
             latest = autodarts_latest_cached()
-            req_label = f"Aktuellste (online: {latest})" if latest else "Aktuellste"
+            req_label = t("autodarts.latest_online", "Aktuellste (online: {latest})", latest=latest) if latest else t("autodarts.latest_short", "Aktuellste")
         elif special == "__LAST__":
             last = autodarts_last_version()
-            req_label = f"Zuletzt (Rollback: {last})" if last else "Zuletzt (Rollback)"
+            req_label = t("autodarts.last_rollback", "Zuletzt (Rollback: {last})", last=last) if last else t("autodarts.last_rollback_short", "Zuletzt (Rollback)")
         else:
             if stable and selected == stable:
-                req_label = f"Stabil ({selected})"
+                req_label = t("autodarts.stable_label", "Stabil ({version})", version=selected)
             else:
                 req_label = str(selected)
 
@@ -5719,7 +7353,7 @@ def autodarts_install_version():
     elif special == "__LAST__":
         target = autodarts_last_version()
         if not target:
-            return redirect(url_for("index", msg="Rollback nicht möglich: Es ist noch keine 'zuletzt'-Version gespeichert.", open_adver="1") + "#ad-version")
+            return redirect(url_for("index", msg=t("autodarts.rollback_not_possible", "Rollback nicht möglich: Es ist noch keine 'zuletzt'-Version gespeichert."), open_adver="1") + "#ad-version")
 
         # Toggle-Verhalten: aktuelle Version als 'zuletzt' merken, damit man wieder zurück kann
         if installed and _SEMVER_RE.match(installed):
@@ -5731,7 +7365,7 @@ def autodarts_install_version():
     else:
         v = (str(selected) or "").strip().lstrip("v")
         if not _SEMVER_RE.match(v):
-            return redirect(url_for("index", msg="Ungültige Versionsangabe.", open_adver="1") + "#ad-version")
+            return redirect(url_for("index", msg=t("autodarts.invalid_version", "Ungültige Versionsangabe."), open_adver="1") + "#ad-version")
 
         # vorherige Version merken
         if installed and _SEMVER_RE.match(installed):
@@ -5747,7 +7381,7 @@ def autodarts_install_version():
         disable_autoupdate_after=True,  # Default soll AUS bleiben
     )
     if ok:
-        return redirect(url_for("index", msg=f"Autodarts Install/Update gestartet (Ziel: {req_label}).", open_adver="1") + "#ad-version")
+        return redirect(url_for("index", msg=t("autodarts.install_update_started", "Autodarts Install/Update gestartet (Ziel: {target}).", target=req_label), open_adver="1") + "#ad-version")
     return redirect(url_for("index", msg=_m, open_adver="1") + "#ad-version")
 
 
@@ -5764,7 +7398,7 @@ def wifi_ping_start():
 def wifi_ping_status(job_id: str):
     job = PING_JOBS.get(job_id)
     if not job:
-        return jsonify({"ok": False, "msg": "Job nicht gefunden."}), 404
+        return jsonify({"ok": False, "msg": t("jobs.not_found", "Job nicht gefunden.")}), 404
 
     # Auto-cleanup nach 15min
     try:
@@ -5806,11 +7440,11 @@ def ap_config():
         new_ssid = (request.form.get("ap_ssid_select") or "").strip()
 
         if not new_ssid:
-            message = "Bitte einen Access-Point-Namen auswählen."
+            message = t("ap.select_name", "Bitte einen Access-Point-Namen auswählen.")
         elif new_ssid not in ap_choices:
-            message = "Ungültige Auswahl. Bitte einen Namen aus der Liste wählen."
+            message = t("generic.invalid_selection", "Ungültige Auswahl. Bitte einen Namen aus der Liste wählen.")
         elif len(new_ssid) > 32:
-            message = "Der Access-Point-Name ist zu lang (max. 32 Zeichen)."
+            message = t("ap.name_too_long", "Der Access-Point-Name ist zu lang (max. 32 Zeichen).")
         else:
             res = subprocess.run(
                 ["nmcli", "connection", "modify", AP_CONNECTION_NAME, "802-11-wireless.ssid", new_ssid],
@@ -5818,13 +7452,13 @@ def ap_config():
                 text=True,
             )
             if res.returncode != 0:
-                message = "Fehler beim Ändern des Access-Point-Namens: " + interpret_nmcli_error(res.stdout, res.stderr)
+                message = t("ap.rename_failed", "Fehler beim Ändern des Access-Point-Namens: {error}", error=interpret_nmcli_error(res.stdout, res.stderr))
             else:
                 subprocess.run(["nmcli", "connection", "down", AP_CONNECTION_NAME], capture_output=True, text=True)
                 subprocess.run(["nmcli", "connection", "up", AP_CONNECTION_NAME], capture_output=True, text=True)
                 success = True
                 current_ssid = new_ssid
-                message = f"Access-Point-Name wurde geändert auf „{new_ssid}“."
+                message = t("ap.renamed", "Access-Point-Name wurde geändert auf „{ssid}“.", ssid=new_ssid)
 
     return render_template(
         "ap_config.html",
@@ -5838,13 +7472,10 @@ def ap_config():
 
 
 
-@app.route("/cam/<int:cam_id>", methods=["GET"])
-def cam_view(cam_id: int):
+def _camera_stream_context(cam_id: int):
     """
-    Live-View einer Kamera:
-      - nur möglich, wenn Kamera-Einstellung aktiv ist
-      - startet genau EINEN mjpg_streamer (alle anderen werden beendet)
-      - löst den Slot vor dem Start erneut auf die aktuelle physische Kamera auf
+    Bereitet den Live-Stream für eine Kamera vor und liefert alle nötigen Daten
+    für Live-View oder Präzisions-Fokus.
     """
     cam_config = load_cam_config()
     autodarts_active = is_autodarts_active()
@@ -5854,14 +7485,9 @@ def cam_view(cam_id: int):
         if bool(cam_config.get("camera_mode", False)):
             _set_camera_mode_state(cam_config, False)
             save_cam_config(cam_config)
-        return (
-            "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-            "<h1>Kamera-Einstellung ist nicht aktiv</h1>"
-            "<p>Bitte gehen Sie zurück und klicken Sie zuerst auf <strong>Kamera einstellen</strong>.</p>"
-            f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            400,
-        )
+        return {
+            "error": redirect(url_for("index", msg=t("camera.mode_not_active_text", "Bitte gehen Sie zurück und klicken Sie zuerst auf Kamera einstellen.")))
+        }
 
     live_inventory = detect_camera_inventory(MAX_CAMERAS)
     if not live_inventory:
@@ -5875,14 +7501,9 @@ def cam_view(cam_id: int):
     cam_count = len(cam_slots)
 
     if cam_count == 0 or cam_id < 1 or cam_id > cam_count:
-        return (
-            f"<html><body><h1>Kamera {cam_id} nicht verfügbar</h1>"
-            f"<p>Es sind aktuell {cam_count} Kamera(s) konfiguriert.</p>"
-            f"<p>Bitte gehen Sie zurück zur Hauptseite und führen Sie die Kamera-Erkennung erneut aus.</p>"
-            f"<p><a href='{url_for('index')}'>Zurück</a></p>"
-            f"</body></html>",
-            404,
-        )
+        return {
+            "error": redirect(url_for("index", msg=t("camera.run_detection_again", "Bitte gehen Sie zurück zur Hauptseite und führen Sie die Kamera-Erkennung erneut aus.")))
+        }
 
     slot = cam_slots[cam_id - 1]
     selected_camera_id = str(slot.get("camera_id") or "")
@@ -5891,23 +7512,15 @@ def cam_view(cam_id: int):
         cam_entry = live_inventory[cam_id - 1]
 
     if not cam_entry:
-        return (
-            f"<html><body><h1>Kamera {cam_id} nicht verfügbar</h1>"
-            "<p>Die gespeicherte Kamera-Zuordnung konnte nicht mehr aufgelöst werden.</p>"
-            f"<p><a href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            404,
-        )
+        return {
+            "error": redirect(url_for("index", msg=t("camera.saved_assignment_unresolved", "Die gespeicherte Kamera-Zuordnung konnte nicht mehr aufgelöst werden.")))
+        }
 
     dev = str(cam_entry.get("preferred_dev") or "").strip()
     if not dev:
-        return (
-            f"<html><body><h1>Kamera {cam_id} nicht verfügbar</h1>"
-            "<p>Für diese Kamera konnte aktuell kein gültiges /dev/videoX gefunden werden.</p>"
-            f"<p><a href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            404,
-        )
+        return {
+            "error": redirect(url_for("index", msg=t("camera.no_valid_video_device", "Für diese Kamera konnte aktuell kein gültiges /dev/videoX gefunden werden.")))
+        }
 
     # Konfiguration mit Live-Zuordnung aktualisieren, ohne extra im Idle zu scannen
     cfg_dirty = False
@@ -5970,49 +7583,139 @@ def cam_view(cam_id: int):
             if probe.get("ok"):
                 fmts = ", ".join(sorted(list(probe.get("formats") or [])))
                 if fmts:
-                    fmts = f"<p><strong>Erkannte Formate:</strong> {fmts}</p>"
+                    fmts = f"<p><strong>{t('camera.detected_formats', 'Erkannte Formate')}:</strong> {fmts}</p>"
                 if probe.get("formats") and ("MJPG" not in probe["formats"]) and ("YUYV" not in probe["formats"]):
                     hint = (
-                        "<p style='color:#ffb347'><strong>Hinweis:</strong> Die Kamera bietet kein MJPG/YUYV an "
-                        "(z.B. nur H264). In diesem Fall kann mjpg_streamer oft keinen MJPEG-Stream erzeugen.</p>"
+                        f"<p style='color:#ffb347'><strong>{t('generic.note', 'Hinweis')}:</strong> "
+                        f"{t('camera.no_mjpg_yuyv_hint', 'Die Kamera bietet kein MJPG/YUYV an (z.B. nur H264). In diesem Fall kann mjpg_streamer oft keinen MJPEG-Stream erzeugen.')}</p>"
                     )
             else:
                 err = (probe.get("error") or "").strip()
                 if err:
-                    fmts = f"<p><strong>v4l2 Probe-Fehler:</strong> {err}</p>"
+                    fmts = f"<p><strong>{t('camera.v4l2_probe_error', 'v4l2 Probe-Fehler')}:</strong> {err}</p>"
 
-            return (
-                "<html><body style='font-family:system-ui;background:#111;color:#eee;padding:20px'>"
-                "<h1>Fehler: Kamera-Stream konnte nicht gestartet werden</h1>"
-                f"<p>Device: <code>{dev}</code></p>"
-                f"<p>mjpg_streamer Input: <code>{input_args}</code></p>"
-                f"{fmts}"
-                f"{hint}"
-                "<p>Log (letzte Zeilen):</p>"
-                f"<pre style='white-space:pre-wrap;background:#0b0b0b;border:1px solid #333;padding:12px;border-radius:10px'>{tail}</pre>"
-                f"<p><a style='color:#3b82f6' href='{url_for('index')}'>Zurück</a></p>"
-                "</body></html>",
-                500,
-            )
+            return {
+                "error": _inline_notice_page(
+                    t("camera.stream_start_failed_title", "Fehler: Kamera-Stream konnte nicht gestartet werden"),
+                    (
+                        f"<p>{t('camera.device_label', 'Device')}: <code>{dev}</code></p>"
+                        f"<p>{t('camera.mjpg_streamer_input', 'mjpg_streamer Input')}: <code>{input_args}</code></p>"
+                        f"{fmts}"
+                        f"{hint}"
+                        f"<p>{t('camera.log_last_lines', 'Log (letzte Zeilen)')}:</p>"
+                        f"<pre style='white-space:pre-wrap;background:#0b0b0b;border:1px solid #333;padding:12px;border-radius:10px'>{tail}</pre>"
+                        f"<p><a style='color:#3b82f6' href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+                    ),
+                    status=500,
+                )
+            }
 
     except FileNotFoundError:
-        return (
-            "<html><body><h1>Fehler: mjpg_streamer nicht gefunden</h1>"
-            "<p>Bitte installieren Sie mjpg-streamer oder passen Sie den Aufruf im Script an.</p>"
-            f"<p><a href='{url_for('index')}'>Zurück</a></p>"
-            "</body></html>",
-            500,
-        )
+        return {
+            "error": _inline_notice_page(
+                t("camera.mjpg_streamer_missing_title", "Fehler: mjpg_streamer nicht gefunden"),
+                (
+                    f"<p>{t('camera.mjpg_streamer_missing_text', 'Bitte installieren Sie mjpg-streamer oder passen Sie den Aufruf im Script an.')}</p>"
+                    f"<p><a href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+                ),
+                status=500,
+            )
+        }
 
     host = request.host.split(":", 1)[0]
     stream_url = f"http://{host}:{port}/?action=stream"
+    proxy_stream_url = url_for("cam_focus_proxy", cam_id=cam_id)
+
+    return {
+        "cam_id": cam_id,
+        "dev": dev,
+        "port": port,
+        "stream_url": stream_url,
+        "proxy_stream_url": proxy_stream_url,
+    }
+
+
+@app.route("/cam/<int:cam_id>", methods=["GET"])
+def cam_view(cam_id: int):
+    ctx = _camera_stream_context(cam_id)
+    if ctx.get("error"):
+        return ctx["error"]
 
     return render_template(
         "cam_view.html",
         cam_id=cam_id,
-        stream_url=stream_url,
+        stream_url=ctx["stream_url"],
     )
 
+
+@app.route("/cam/<int:cam_id>/focus", methods=["GET"])
+def cam_focus(cam_id: int):
+    ctx = _camera_stream_context(cam_id)
+    if ctx.get("error"):
+        return ctx["error"]
+
+    return render_template(
+        "cam_focus.html",
+        cam_id=cam_id,
+        stream_url=ctx["stream_url"],
+        proxy_stream_url=ctx["proxy_stream_url"],
+        focus_pdf_url=url_for("siemens_star_pdf"),
+    )
+
+
+@app.route("/cam/<int:cam_id>/proxy.mjpg", methods=["GET"])
+def cam_focus_proxy(cam_id: int):
+    port = STREAM_BASE_PORT + (cam_id - 1)
+    upstream_url = f"http://127.0.0.1:{port}/?action=stream"
+
+    def generate():
+        resp = None
+        try:
+            req = urllib.request.Request(upstream_url, headers={"User-Agent": "AutodartsWebPanel/1.0"})
+            resp = urllib.request.urlopen(req, timeout=15)
+            while True:
+                chunk = resp.read(16384)
+                if not chunk:
+                    break
+                yield chunk
+        except Exception:
+            return
+        finally:
+            try:
+                if resp is not None:
+                    resp.close()
+            except Exception:
+                pass
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="multipart/x-mixed-replace; boundary=boundarydonotcross",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
+    )
+
+
+@app.route("/tools/siemens-star.pdf", methods=["GET"])
+def siemens_star_pdf():
+    pdf_path = SIEMENS_STAR_DIR / SIEMENS_STAR_FILENAME
+    if not pdf_path.exists():
+        return _inline_notice_page(
+            t("camera.focus_target_missing_title", "Fokusziel-PDF nicht gefunden"),
+            (
+                f"<p>{t('camera.focus_target_missing_text', 'Die Datei wurde nicht gefunden unter: {path}', path=str(pdf_path))}</p>"
+                f"<p><a href='{url_for('index')}'>{t('generic.back', 'Zurück')}</a></p>"
+            ),
+            status=404,
+        )
+
+    download = request.args.get("download", "").strip().lower() in {"1", "true", "yes", "download"}
+    resp = send_from_directory(
+        str(SIEMENS_STAR_DIR),
+        SIEMENS_STAR_FILENAME,
+        as_attachment=download,
+        download_name=SIEMENS_STAR_FILENAME,
+    )
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 # ------------------------------

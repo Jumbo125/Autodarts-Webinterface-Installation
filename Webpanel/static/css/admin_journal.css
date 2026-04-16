@@ -1,0 +1,85 @@
+/*
+ * Copyright (c) 2026 Peter Rottmann
+ * All rights reserved.
+ *
+ * This file is part of a proprietary project and is not open source.
+ * No use, modification, distribution, publication, sublicensing,
+ * or commercial use of this file, in whole or in part, is permitted
+ * without the prior express written permission of Peter Rottmann.
+ *
+ * Unless otherwise stated, these restrictions apply exclusively to
+ * the parts of this project created by Peter Rottmann.
+ * Third-party software and components remain subject to their
+ * respective license terms.
+ *
+ * This software is provided "as is", without warranty of any kind,
+ * express or implied, including but not limited to merchantability,
+ * fitness for a particular purpose, and noninfringement.
+ * In no event shall the author be liable for any claim, damages,
+ * or other liability arising from, out of, or in connection with
+ * the software or its use.
+ */
+ 
+style > body {
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  background: #0b0f14;
+  color: #e6edf3;
+  margin: 0;
+  padding: 16px;
+}
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.top {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.btn {
+  display: inline-block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #1f2937;
+  color: #e6edf3;
+  text-decoration: none;
+  border: 1px solid #334155;
+}
+.btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.btn.danger {
+  background: #7f1d1d;
+  border-color: #7f1d1d;
+}
+.hint {
+  opacity: 0.8;
+  font-size: 14px;
+  margin: 6px 0 14px;
+}
+#log {
+  white-space: pre-wrap;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  background: #0f172a;
+  border: 1px solid #243244;
+  border-radius: 14px;
+  padding: 12px;
+  min-height: 60vh;
+  overflow: auto;
+}
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}

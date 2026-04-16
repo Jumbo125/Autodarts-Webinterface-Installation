@@ -1,0 +1,358 @@
+/*
+ * Copyright (c) 2026 Peter Rottmann
+ * All rights reserved.
+ *
+ * This file is part of a proprietary project and is not open source.
+ * No use, modification, distribution, publication, sublicensing,
+ * or commercial use of this file, in whole or in part, is permitted
+ * without the prior express written permission of Peter Rottmann.
+ *
+ * Unless otherwise stated, these restrictions apply exclusively to
+ * the parts of this project created by Peter Rottmann.
+ * Third-party software and components remain subject to their
+ * respective license terms.
+ *
+ * This software is provided "as is", without warranty of any kind,
+ * express or implied, including but not limited to merchantability,
+ * fitness for a particular purpose, and noninfringement.
+ * In no event shall the author be liable for any claim, damages,
+ * or other liability arising from, out of, or in connection with
+ * the software or its use.
+ */
+:root {
+      --text: #eef6ff;
+      --muted: rgba(235, 244, 255, 0.08);
+      --panel: rgba(7, 18, 43, 0.08);
+      --panel-strong: rgba(6, 14, 31, 0.08);
+      --line: rgba(255, 255, 255, 0.18);
+      --line-strong: rgba(255, 255, 255, 0.72);
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+      --blur: blur(1px);
+    }
+
+    html { min-height: 100%; }
+    body {
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(1, 7, 20, 0.84) 0%, rgba(5, 24, 62, 0.70) 36%, rgba(6, 35, 90, 0.46) 100%),
+        url("../bg-darts-blue.webp") center center / cover no-repeat fixed;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(87, 172, 255, 0.20), transparent 30%),
+        linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.34));
+      pointer-events: none;
+      z-index: 0;
+    }
+    body > * { position: relative; z-index: 1; }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 30px 16px 64px;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 2.7rem);
+      margin: 0 0 10px;
+      letter-spacing: 0.01em;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.34);
+    }
+
+    #header{
+      display: flex;
+    justify-content: space-between;
+    width: 80%;
+    }
+    #header  > div{
+      display: flex;
+    justify-content: flex-start;
+    }
+
+    #header  #lang_header{
+        display: flex;
+    justify-content: flex-end;
+    }
+    
+    #header  #lang_header button{
+       margin-left: 5px;
+    }
+   
+	.subtitle {
+	  color: #000;
+	  margin-bottom: 26px;
+	  font-size: 1.5rem;
+	  font-weight: 900;
+	  text-shadow: none;
+	}
+    .card {
+      background: var(--panel);
+      border-radius: 18px;
+      padding: 18px 20px 20px;
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+      transition: background .18s ease, transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .btn:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.92);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.24);
+    }
+    .btn-primary {
+      background: rgba(98, 166, 255, 0.16);
+      border-color: rgba(223, 239, 255, 0.9);
+      color: white;
+    }
+    .btn-danger {
+      background: rgba(255, 92, 92, 0.10);
+      border-color: rgba(255, 213, 213, 0.86);
+      color: white;
+    }
+    .btn-precision-focus {
+      background: rgba(255, 206, 84, 0.18);
+      border-color: rgba(255, 234, 173, 0.94);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 0 0 1px rgba(255, 223, 128, 0.28) inset, 0 10px 24px rgba(0,0,0,0.18);
+    }
+    .btn-small { padding: 6px 12px; font-size: 0.85rem; }
+    .btn-disabled { opacity: 0.42; pointer-events: none; filter: grayscale(0.3); }
+
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(5, 14, 33, 0.48);
+      color: #fff;
+      padding: 10px 12px;
+      resize: vertical;
+      font-family: inherit;
+      box-sizing: border-box;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    label { font-size: 0.9rem; display: block; margin-bottom: 4px; }
+    input[type=text], input[type=password] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(5, 14, 33, 0.48);
+      color: #fff;
+      margin-bottom: 10px;
+      font-family: inherit;
+      box-sizing: border-box;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    select {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(5, 14, 33, 0.55);
+      color: #fff;
+      font-family: inherit;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .cam-buttons { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .slot-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      background: rgba(255,255,255,0.045);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .slot-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+    .info-msg { font-size: 0.9rem; margin: 8px 0 14px; color: #ffd18b; }
+    .hint { font-size: 0.82rem; color: rgba(235,244,255,0.72); margin-top: 4px; }
+    .msg-ok { color:#c7ffd3; margin-top:10px; white-space:pre-line; }
+    .msg-bad { color:#ffd2d2; margin-top:10px; white-space:pre-line; }
+    footer {
+      margin-top: 28px;
+      font-size: 0.76rem;
+      color: rgba(235,244,255,0.64);
+      text-align: center;
+      text-shadow: 0 6px 20px rgba(0,0,0,0.28);
+    }
+    .sysinfo {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: var(--panel-strong);
+      border-radius: 16px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      border: 1px solid var(--line);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+    .quick-admin {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      width: min(220px, calc(100vw - 20px));
+      background: var(--panel-strong);
+      border-radius: 18px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      border: 1px solid var(--line);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+    .quick-admin h3 { margin:0 0 4px; font-size:0.95rem; }
+    .quick-admin .qa-status { color: var(--muted); margin-bottom:8px; }
+    .quick-admin .qa-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .quick-admin .qa-grid form { margin:0; }
+    .quick-admin .qa-grid .btn { width:100%; padding:8px 10px; font-size:0.82rem; }
+	
+	#apClientInternetCard{
+		width: fit-content;
+	}
+	
+	
+
+
+    @media (max-width: 1499px) {
+      .quick-admin { position: static; width: auto; margin: 12px 16px 0; }
+      .sysinfo { position: static; margin: 12px 16px 0; width: auto; max-width: none; }
+      .container { padding-top: 14px; }
+    }
+    .sysinfo h3 { margin:0 0 4px; font-size:0.9rem; }
+    .sysinfo-row { white-space:nowrap; }
+    code {
+      background: rgba(5, 12, 26, 0.72);
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.14);
+      color: #fff;
+    }
+    .dot { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:6px; vertical-align:middle; }
+    .dot-green { background:#86ff9b; box-shadow: 0 0 10px rgba(134,255,155,0.45); }
+    .dot-red { background:#ff8d8d; box-shadow: 0 0 10px rgba(255,141,141,0.35); }
+    .dot-gray { background:#c5ceda; }
+    details {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px 14px;
+      background: var(--panel);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      box-shadow: var(--shadow);
+    }
+    details summary { cursor:pointer; list-style:none; user-select:none; font-weight:600; }
+    details summary::-webkit-details-marker { display:none; }
+    .admin-hint { font-size:0.8rem; color: rgba(235,244,255,0.72); margin-top:6px; }
+
+    .ad-status {
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:0.9rem;
+      margin-bottom:10px;
+      font-weight:bold;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .ad-on { border:1px solid rgba(158, 255, 184, 0.72); color:#d5ffe0; }
+    .ad-off { border:1px solid rgba(255, 185, 185, 0.72); color:#ffe0e0; }
+
+
+    .ap-internet-card {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:12px 16px;
+      border-radius:14px;
+      margin: 2px 0 16px;
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
+    }
+    .ap-internet-main {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .ap-internet-title {
+      font-weight:800;
+      font-size:1rem;
+      line-height:1.2;
+    }
+    .ap-internet-text {
+      margin-top:3px;
+      font-size:0.95rem;
+      color:#eef6ff;
+    }
+    .ap-internet-hint {
+      font-size:0.8rem;
+      color: rgba(235,244,255,0.78);
+      text-align:right;
+      max-width: 360px;
+    }
+    .ap-internet-green {
+      border-color: rgba(158, 255, 184, 0.72);
+      color:#d5ffe0;
+    }
+    .ap-internet-red {
+      border-color: rgba(255, 185, 185, 0.72);
+      color:#ffe0e0;
+    }
+
+    @media (max-width: 760px) {
+      h1 { font-size: 1.85rem; }
+      .container { padding: 18px 14px 54px; }
+      .card { padding: 16px; }
+      .btn-row { gap: 8px; }
+    }

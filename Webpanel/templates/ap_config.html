@@ -1,44 +1,45 @@
-
 <!doctype html>
+<!--
+Copyright (c) 2026 Peter Rottmann
+All rights reserved.
+Proprietary and not open source.
+No use, modification, distribution, publication, sublicensing,
+or commercial use without prior express written permission.
+Applies only to parts created by Peter Rottmann.
+Third-party components remain under their respective licenses.
+Provided "as is", without warranty.
+-->
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <title>Access-Point auswählen</title>
-  <style>
-    body { font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#111; color:#eee; margin:0; padding:0; }
-    .container { max-width: 700px; margin: 0 auto; padding: 24px 16px 60px; }
-    h1 { font-size: 1.6rem; margin-bottom: 8px; }
-    .card { background:#1c1c1c; border-radius:12px; padding:16px 18px 18px; margin-bottom:18px; box-shadow:0 0 20px rgba(0,0,0,0.4); }
-    label { font-size:0.9rem; display:block; margin-bottom:4px; }
-    input[type=text], select { width:100%; padding:8px; border-radius:8px; border:1px solid #444; background:#111; color:#eee; margin-bottom:10px; font-family:inherit; }
-    .btn-row { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
-    .btn { display:inline-block; padding:10px 16px; border-radius:999px; border:1px solid #444; background:#2a2a2a; color:#eee; text-decoration:none; font-size:0.95rem; cursor:pointer; }
-    .btn-primary { background:#3b82f6; border-color:#3b82f6; color:white; }
-    .msg-ok { color:#6be26b; margin-bottom:8px; }
-    .msg-bad { color:#ff6b6b; margin-bottom:8px; }
-    .hint { font-size:0.8rem; opacity:0.7; margin-top:4px; }
-    code { background:#0b0b0b; padding:2px 6px; border-radius:6px; border:1px solid #333; }
-    .dot { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:6px; vertical-align:middle; }
-    .dot-green { background:#6be26b; }
-    .dot-red { background:#ff6b6b; }
-    .dot-gray { background:#9ca3af; }
-    details { border:1px solid #333; border-radius:12px; padding:12px 14px; background:#171717; }
-    details summary { cursor:pointer; list-style:none; user-select:none; font-weight:600; }
-    details summary::-webkit-details-marker { display:none; }
-    .admin-hint { font-size:0.8rem; opacity:0.75; margin-top:6px; }
-
-  </style>
+  <title data-key="ap_config.page_title">Access-Point auswählen</title>
+    <!-- favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon/favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon/favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}" />
+    <!-- favicon ende -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ap_config.css') }}">
+     <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/ap_config.js') }}"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Access-Point (Mini PC-WLAN) auswählen</h1>
+    <h1 data-key="ap_config.title">Access-Point (Mini PC-WLAN) auswählen</h1>
 
     <div class="card">
       {% if current_ssid %}
-        <p>Aktueller Access-Point-Name (SSID): <strong>{{ current_ssid }}</strong></p>
+        <p>
+          <span data-key="ap_config.current_ssid_label">Aktueller Access-Point-Name (SSID):</span>
+          <strong>{{ current_ssid }}</strong>
+        </p>
       {% else %}
-        <p>Der Access-Point <code>{{ ap_connection_name }}</code> wurde nicht gefunden.
-           Bitte prüfen, ob das Access-Point-Setup korrekt installiert ist.</p>
+        <p>
+          <span data-key="ap_config.not_found_prefix">Der Access-Point</span>
+          <code>{{ ap_connection_name }}</code>
+          <span data-key="ap_config.not_found_suffix">wurde nicht gefunden. Bitte prüfen, ob das Access-Point-Setup korrekt installiert ist.</span>
+        </p>
       {% endif %}
 
       {% if message %}
@@ -46,21 +47,21 @@
       {% endif %}
 
       <form method="post">
-        <label for="ap_ssid_select">Neuer Name für das Mini PC-WLAN</label>
+        <label for="ap_ssid_select" data-key="ap_config.select_label">Neuer Name für das Mini PC-WLAN</label>
         <select id="ap_ssid_select" name="ap_ssid_select" required>
           {% for opt in ap_choices %}
             <option value="{{ opt }}" {% if opt == selected_ssid %}selected{% endif %}>{{ opt }}</option>
           {% endfor %}
         </select>
 
-        <p class="hint">
+        <p class="hint" data-key="ap_config.hint">
           Hinweis: Nach dem Speichern müssen Sie sich mit Ihren Geräten mit dem neuen WLAN-Namen verbinden
           (Access-Point des Mini PC).
         </p>
 
         <div class="btn-row">
-          <button type="submit" class="btn btn-primary">Speichern</button>
-          <a href="{{ url_for('index') }}" class="btn">Zurück</a>
+          <button type="submit" class="btn btn-primary" data-key="common.save">Speichern</button>
+          <a href="{{ url_for('index') }}" class="btn" data-key="common.back">Zurück</a>
         </div>
       </form>
     </div>

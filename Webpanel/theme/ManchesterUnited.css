@@ -1,0 +1,793 @@
+/* Autor: Peter Rottmann */
+/* Spielmodus: X01,Cricket,Gotcha,Bermuda... all included */
+/* Bildschirmauflösung: 1920x1080 */
+
+:root {
+  /*--color-bg-main: linear-gradient(135deg, #2bg000, #3b0a0a);*/
+  /*--color-bg-box: linear-gradient(145deg, rgba(255, 160, 122, 0.4), rgba( 255, 69, 0, 0.4));*/
+  --color-border: rgba(0, 80, 20, 0.9);
+  /*--color-border: #ffffff;*/
+  --color-text: #ffffff;
+  --color-text-soft: #ffffff;
+  /*--color-shadow: 0 0 10px #ff6b6b;
+  --color-shadow-strong: 0 0 20px #ff6b6b;*/
+  --color-shadow: 0 0 0px #ffffff;
+  /*--color-shadow-strong: 0 0 20px #ffffff;*/
+  --font-main: 'Droid Sans',;
+  --spacing-player: 20px;
+  --color-bg-box: linear-gradient(
+  145deg,
+  rgba(0, 7, 6, 0.5),
+  rgba(0, 5, 4, 0.9)
+);
+}
+
+/* --- Hauptcontainer --- */
+:root:not(:has(.css-rc3vw3)) .css-tkevr6 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  /*background: var(--color-bg-main);*/
+  /*color: var(--color-text);*/
+  font-family: var(--font-main);
+}
+
+/* --- Gemeinsame Basis fŸr alle Spielerboxen --- */
+:root:not(:has(.css-rc3vw3)) .css-rtn29s,
+:root:not(:has(.css-rc3vw3)) .css-hjw8x4 {
+  background: var(--color-bg-box);
+  color: var(--color-text);
+  padding: 1rem;
+  box-sizing: border-box;
+  border: 2px solid var(--color-border);
+  box-shadow: var(--color-shadow);
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  z-index: 10;
+  position: absolute;
+  width: 400px;
+  height: calc((100% - 180px) / 3);
+}
+
+/* --- Hover-Effekt --- */
+:root:not(:has(.css-rc3vw3)) .css-rtn29s:hover,
+:root:not(:has(.css-rc3vw3)) .css-hjw8x4:hover {
+  box-shadow: var(--color-shadow-strong);
+  transform: scale(1.03);
+  cursor: pointer;
+}
+
+/* ========================= */
+/* 1Ð2 Spieler: keine Hšhen-Anpassung */
+/* ========================= */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):only-child {
+ top: 90px;
+ left: 60px;
+  height: calc(100% - 180px);
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(2) {
+  top: 90px;
+  left: 60px;
+  height: calc(100% - 200px);
+}
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(1) {
+  top: 90px;
+  right: 60px;
+  height: calc(100% - 200px);
+}
+
+/* Spielername Position fŸr 1Ð2 Spieler */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display:has(> div:nth-child(2):nth-last-child(1)) .css-y3hfdd,
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display:has(> div:only-child) .css-y3hfdd {
+  position: absolute; 
+  top: 4em;   /* frei anpassen */
+}
+
+/* ========================= */
+/* 3Ð4 Spieler: zwei Reihen, Hšhe halbiert */
+/* ========================= */
+
+/* Spieler 1 (oben links) */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(3),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(4) {
+  top: 90px;
+  left: 60px;
+  height: calc((105% - 180px) / 2 - var(--spacing-player));
+}
+
+/* Spieler 2 (oben rechts) */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(2),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(3) {
+  top: 90px;
+  right: 60px;
+  height: calc((105% - 180px) / 2 - var(--spacing-player));
+}
+
+/* Spieler 3 (unten links) */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(1),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(2) {
+ top: calc(90px + ((100% - 180px) / 2) + var(--spacing-player));
+  left: 60px;
+  height: calc((105% - 180px) / 2 - var(--spacing-player));
+}
+
+/* Spieler 4 (unten rechts) */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(4):last-child {
+  top: calc(90px + ((100% - 180px) / 2) + var(--spacing-player));
+  right: 60px;
+  height: calc((105% - 180px) / 2 - var(--spacing-player));
+}
+
+/* Spielername Position fŸr 3Ð4 Spieler */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display:has(> div:nth-child(3):nth-last-child(2)) .css-y3hfdd,
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display:has(> div:nth-child(4):last-child)        .css-y3hfdd {
+ position: absolute; 
+ top: 7em;   /* frei anpassen */
+}
+
+/* ========================= */
+/* 5Ð6 Spieler: drei Reihen, Hšhe gedrittelt */
+/* ========================= */
+:root {
+  --row-height-3: calc((108% - 180px) / 3 - var(--spacing-player));
+}
+
+/* Reihe 1 (oben) */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(5),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(6) {
+  top: 90px;
+  left: 60px;
+  height: var(--row-height-3);
+}
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(4),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(5) {
+  top: 90px;
+  right: 60px;
+  height: var(--row-height-3);
+}
+
+/* Reihe 2 (Mitte) */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(3),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(4) {
+  top: calc(90px + ((100% - 180px) / 3) + var(--spacing-player));
+  left: 60px;
+  height: var(--row-height-3);
+}
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(4):nth-last-child(2),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(4):nth-last-child(3) {
+  top: calc(90px + ((100% - 180px) / 3) + var(--spacing-player));
+  right: 60px;
+  height: var(--row-height-3);
+}
+
+/* Reihe 3 (unten) */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(5):nth-last-child(1),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(5):nth-last-child(2) {
+  top: calc(90px + 2 * ((100% - 180px) / 3) + 2 * var(--spacing-player));
+  left: 60px;
+  height: var(--row-height-3);
+}
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(6):last-child {
+  top: calc(90px + 2 * ((100% - 180px) / 3) + 2 * var(--spacing-player));
+  right: 60px;
+  height: var(--row-height-3);
+}
+
+/* Spielername Position fŸr 5Ð6 Spieler */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display:has(> div:nth-child(5):nth-last-child(1)) .css-y3hfdd,
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display:has(> div:nth-child(6):last-child) .css-y3hfdd {
+  position: absolute;
+  top: 2em;  /* frei anpassbar */
+}
+
+/* --- Kompakter Bereich --- */
+:root:not(:has(.css-rc3vw3)) .css-1cdcn26 {
+  margin: 0 auto;
+  transform: scale(0.95);
+  background-color: transparent;
+  color: var(--color-text);
+}
+
+/* --- Spieleranzeige --- */
+:root:not(:has(.css-rc3vw3)) .css-y3hfdd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  background-color: transparent;
+  color: var(--color-text);
+}
+
+:root:not(:has(.css-rc3vw3)) .css-elma0c {
+  text-align: center;
+  color: var(--color-border);
+}
+
+:root:not(:has(.css-rc3vw3)) .css-1j0bqop {
+  order: 1;
+  font-size: 24px;
+  margin-bottom: 0.9rem;
+  text-align: center;
+  color: var(--color-text-soft);
+}
+
+:root:not(:has(.css-rc3vw3)) .css-1r7jzhg {
+  order: 2;
+  font-size: 120px;
+  text-align: center;
+  color: var(--color-text);
+  text-shadow: 0 0 25px var(--color-shadow);
+}
+
+/* --- Navigation --- */
+:root:not(:has(.css-rc3vw3)) .css-ege71s {
+  background: var(--color-bg-main);
+  color: var(--color-text);
+}
+
+/* --- Turn- & Score-Bereich --- */
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .css-rrf7rv,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .score.css-156dsds,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .ad-ext-turn-throw.css-1p5spmi {
+  background: var(--color-bg-box);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--color-border);
+  box-shadow: var(--color-shadow);
+  text-shadow: 0 0 15px var(--color-shadow);
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .css-rrf7rv { font-size: 32px; }
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .score.css-156dsds,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .ad-ext-turn-throw.css-1p5spmi {
+  font-size: 100px;
+  font-weight: bold;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .css-rrf7rv:hover,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .score.css-156dsds:hover,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .ad-ext-turn-throw.css-1p5spmi:hover {
+  box-shadow: var(--color-shadow-strong);
+  transform: scale(1.03);
+  cursor: pointer;
+}
+
+/* --- Dark Theme Overrides --- */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc,
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-ab3dry {
+  background: var(--color-bg-main) !important;
+  color: var(--color-text);
+  font-family: var(--font-main);
+}
+
+/* --- Buttons im Dark Theme --- */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc
+div.css-ab3dry div.chakra-stack.css-2z3xwd
+div.animate__animated.animate__fadeIn.css-14kci4d
+div.css-17gl2zv div.chakra-stack.css-1aucrbz a.chakra-button.css-z1xk1r {
+  background: var(--color-bg-box) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: 0 0 6px var(--color-border);
+  border-radius: 12px;
+  text-shadow: 0 0 4px var(--color-border);
+  font-weight: bold;
+  transition: all 0.25s ease;
+}
+
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc
+div.css-ab3dry div.chakra-stack.css-2z3xwd
+div.animate__animated.animate__fadeIn.css-14kci4d
+div.css-17gl2zv div.chakra-stack.css-1aucrbz a.chakra-button.css-z1xk1r:hover {
+  box-shadow: 0 0 10px var(--color-border);
+  transform: scale(1.03);
+  color: var(--color-text) !important;
+  text-shadow: 0 0 6px var(--color-border);
+}
+
+/* --- Cards --- */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf 
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj {
+  background: var(--color-bg-box) !important;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0 6px var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text);
+  text-shadow: 0 0 4px var(--color-shadow);
+}
+
+/* Header & Footer in Cards */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf 
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj div.chakra-card__header.css-1sl53ol {
+  background: var(--color-bg-main) !important;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf 
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj div.chakra-card__footer.css-fpfl0e {
+  background: var(--color-bg-main) !important;
+  border-top: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+}
+/* Box-Styling fŸr alle Buttons in der Mitte */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-ab3dry div.chakra-stack.css-2z3xwd div.animate__animated.animate__fadeIn.css-14kci4d div.css-17gl2zv div.chakra-stack.css-1aucrbz div.chakra-stack.css-xcvsk5 a.chakra-button.css-z1xk1r,
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-ab3dry div.chakra-stack.css-2z3xwd div.animate__animated.animate__fadeIn.css-14kci4d div.css-17gl2zv div.chakra-stack.css-1aucrbz a.chakra-button.css-z1xk1r {
+    background-color: #2b0e0e; /* Dunkelrot passend zum Theme */
+    border: 1px solid #5a1d1d; /* Fester, dezenter Rahmen */
+    border-radius: 8px; /* Ecken leicht abgerundet */
+    box-shadow: none !important; /* Glow weg */
+    color: #fff; /* Schrift wei§ */
+    font-weight: bold;
+    text-shadow: none !important; /* Text-Glow weg */
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Hover-Effekt ohne Glow */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-ab3dry div.chakra-stack.css-2z3xwd div.animate__animated.animate__fadeIn.css-14kci4d div.css-17gl2zv div.chakra-stack.css-1aucrbz div.chakra-stack.css-xcvsk5 a.chakra-button.css-z1xk1r:hover,
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-ab3dry div.chakra-stack.css-2z3xwd div.animate__animated.animate__fadeIn.css-14kci4d div.css-17gl2zv div.chakra-stack.css-1aucrbz a.chakra-button.css-z1xk1r:hover {
+    background-color: #5a1d1d; /* Etwas heller beim Hover */
+    border-color: #7f2e2e;
+    box-shadow: none !important; /* Kein Box-Glow beim Hover */
+    text-shadow: none !important; /* Kein Text-Glow beim Hover */
+}
+
+/* --- Cards --- */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf 
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj {
+  background: var(--color-bg-box) !important;
+  border: 1px solid var(--color-border);
+  box-shadow: none !important; /* Glow entfernt */
+  border-radius: 12px;
+  color: var(--color-text);
+  text-shadow: none !important; /* Glow entfernt */
+}
+
+/* Header in Cards */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf 
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj div.chakra-card__header.css-1sl53ol {
+  background: var(--color-bg-main) !important;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: var(--color-text);
+  text-shadow: none !important; /* Glow entfernt */
+}
+
+/* Footer in Cards */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf 
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj div.chakra-card__footer.css-fpfl0e {
+  background: var(--color-bg-main) !important;
+  border-top: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  color: var(--color-text);
+  text-shadow: none !important; /* Glow entfernt */
+}
+
+/* Hover-Effekt fŸr Cards */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf 
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj:hover {
+  transform: scale(1.03);
+  cursor: pointer;
+  box-shadow: none !important; /* Kein Glow beim Hover */
+  text-shadow: none !important;
+}
+/* --- Navigation Dark Theme mit eckigem roten Rahmen --- */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.chakra-stack.navigation.css-ege71s {
+  /*background: var(--color-bg-main) !important;*/
+
+background: linear-gradient(
+  145deg,
+  rgba(0, 0, 0, 0.4),
+  rgba(0, 0, 0, 0.4)
+) !important;
+
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border); /* Roter Rahmen */
+  border-radius: 0; /* Eckig */
+  box-shadow: none !important; /* Kein Glow */
+  font-family: var(--font-main);
+}
+/* --- MenŸ-List an Theme anpassen (rund) --- */
+#menu-list-\:rfr\: {
+  background: var(--color-bg-box) !important; /* Dunkelroter Verlauf wie Boxen */
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border); /* Roter Rahmen */
+  border-radius: 12px; /* Runde Ecken */
+  box-shadow: none !important; /* Kein Glow */
+  font-family: var(--font-main);
+  padding: 0.5rem 0;
+  overflow: hidden; /* Damit abgerundete Ecken auch fŸr Hover-Effekte gelten */
+}
+
+/* --- MenŸ-Items --- */
+#menu-list-\:rfr\: .chakra-menu__menuitem {
+  background: transparent !important;
+  color: var(--color-text) !important;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3); /* Dezente Linie zwischen Items */
+  text-shadow: none !important; /* Kein Text-Glow */
+}
+
+/* Letztes Item ohne Linie */
+#menu-list-\:rfr\: .chakra-menu__menuitem:last-child {
+  border-bottom: none;
+}
+
+/* Hover-Effekt (rund bleibt erhalten) */
+#menu-list-\:rfr\: .chakra-menu__menuitem:hover {
+  background: rgba(255, 255, 255, 0.15) !important; /* leicht helleres Rot */
+  color: var(--color-text) !important;
+}
+
+/* --- MenŸ-List :r1: im Theme-Stil (rund & rot) --- */
+#menu-list-\:r1\: {
+  background: var(--color-bg-box) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: none !important;
+  font-family: var(--font-main);
+  padding: 0.5rem 0;
+  overflow: hidden;
+}
+
+/* --- MenŸ-Items --- */
+#menu-list-\:r1\: .chakra-menu__menuitem {
+  background: transparent !important;
+  color: var(--color-text) !important;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  text-shadow: none !important;
+}
+
+/* Letztes Item ohne Linie */
+#menu-list-\:r1\: .chakra-menu__menuitem:last-child {
+  border-bottom: none;
+}
+
+/* Hover-Effekt (passt zum Theme) */
+#menu-list-\:r1\: .chakra-menu__menuitem:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: var(--color-text) !important;
+}
+/* --- MenŸ-Liste im roten, runden Theme-Stil --- */
+#menu-list-\:rhj\: {
+  background: var(--color-bg-box) !important; /* Gleicher Grauton wie Boxen */
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border); /* Roter Rahmen */
+  border-radius: 12px; /* Rund */
+  box-shadow: none !important; /* Kein Glow */
+  font-family: var(--font-main);
+  padding: 0.4rem 0;
+}
+
+/* --- MenŸ-Items --- */
+#menu-list-\:rhj\: > * {
+  background: transparent !important;
+  color: var(--color-text) !important;
+}
+
+#menu-list-\:rhj\:\hover {
+  background: rgba(255, 107, 107, 0.15) !important;
+}
+/* Spielername im Extended Player Display: immer wei§, ohne Glow */
+:root:not(:has(.css-rc3vw3)) html body.chakra-ui-dark 
+div#root 
+div.css-z42oq0 
+div.css-nfhdnc 
+div.css-tkevr6 
+div#ad-ext-player-display.chakra-stack.showAnimations.css-1iy3ld1 
+div.ad-ext-player.css-1en42kf 
+div.chakra-stack.css-y3hfdd 
+div.chakra-stack.css-37hv00 
+div.css-aa7b80 
+span.css-elma0c 
+div.chakra-stack.css-1igwmid 
+span.ad-ext-player-name.css-xgedvp 
+p.chakra-text.css-0 {
+  color: #ffffff !important;      /* Wei§ */
+  text-shadow: none !important;   /* Kein Glow */
+}
+
+/* MenŸ-Listen im roten, runden Theme-Stil (ohne Linien zwischen Items) */
+[id^="menu-list-"] {
+  background: var(--color-bg-box) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  font-family: var(--font-main) !important;
+  padding: 0.5rem 0 !important;
+  overflow: hidden !important;
+}
+
+/* MenŸ-Items */
+[id^="menu-list-"] .chakra-menu__menuitem {
+  background: transparent !important;
+  color: var(--color-text) !important;
+  padding: 0.5rem 1rem !important;
+  text-shadow: none !important;
+  border-bottom: none !important; /* Linien entfernt */
+}
+
+/* Hover-Effekt */
+[id^="menu-list-"] .chakra-menu__menuitem:hover {
+  background: rgba(255, 255, 1255, 0.15) !important;
+  color: var(--color-text) !important;
+}
+/* Entfernt die Rahmen der einzelnen MenŸ-Items */
+[id^="menu-list-"] .chakra-menu__menuitem {
+  border: none !important; /* komplette Umrandung weg */
+  background: transparent !important;
+  color: var(--color-text) !important;
+  padding: 0.5rem 1rem !important;
+  text-shadow: none !important;
+}
+body > div:nth-of-type(1) > div > div:nth-of-type(1) {
+  background: var(--color-bg-box) !important;
+  color: var(--color-text) !important;
+  border-radius: 0 !important; /* eckig */
+  padding: 1rem !important;
+  border: 1px solid var(--color-border) !important;
+}
+body > div:nth-of-type(1) > div > div:nth-of-type(1) {
+  background: var(--color-bg-box) !important;
+  color: var(--color-text) !important;
+  border-radius: 0 !important; /* eckig */
+  border: 1px solid var(--color-border) !important;
+
+  /* StabilitŠt: keine Layout-Verschiebung */
+  padding: 0 !important;       /* kein zusŠtzliches Innenma§ */
+  margin: 0 !important;        /* kein Verschieben nach au§en */
+  box-sizing: border-box !important; /* Border zŠhlt zur Breite */
+  position: relative !important; /* bleibt an Ort und Stelle */
+}
+
+/* Spielerboxen Breite */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div {
+  position: absolute;
+  width: 350px;
+}
+
+/* Scoring und Bullout Anzeige Gesamtbreite */
+:root:not(:has(.css-rc3vw3)) .css-1omnor5,
+:root:not(:has(.css-rc3vw3)) .css-ul22ge{
+  width: 1000px;  
+}
+
+/* Scoring Anzeige Hšhe */
+:root:not(:has(.css-rc3vw3)) .css-1dkgpmk,
+:root:not(:has(.css-rc3vw3)) .css-1wlduvp,
+:root:not(:has(.css-rc3vw3)) .css-sm8wdq,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .css-rrf7rv,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .score.css-156dsds,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .ad-ext-turn-throw.css-1p5spmi {
+ height: 110px; 
+}
+
+/* Scoring Anzeige bei Bust/Win/CheckGuide Position */
+:root:not(:has(.css-rc3vw3)) .css-1dkgpmk,
+:root:not(:has(.css-rc3vw3)) .css-1wlduvp,
+:root:not(:has(.css-rc3vw3)) .css-sm8wdq,
+:root:not(:has(.css-rc3vw3)) .css-881tme {
+ position: relative;
+ top: -0.5em;
+ background: rgba(0, 75, 55, 0.9);
+ border: 2px solid var(--color-border);
+}
+
+/* Scoring Anzeige bei Bot/Public Game Position */
+:root:not(:has(.css-rc3vw3)):root:has(.css-7lnr9n) .css-1emway5 {
+ position: relative;
+ top: -1em;
+}
+
+/* MenŸleiste Gesamtbreite */
+:root:not(:has(.css-rc3vw3)) .css-19lo6pj {
+  width: 1385px;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Chalkboard 1vs1 */
+:root:has(.css-1u90hiz) .css-1u90hiz {
+ position: absolute;
+ right: 4.2em;
+ top: 22em;
+ height: 47%;
+ width: 60%;
+}
+
+/* Chalkboard Schrift Grš§e/Breite */
+:root:has(.css-1u90hiz) tbody tr td {
+ font-size: 38px; 
+ width:50%;
+}
+
+/* Aktiver Spieler Box */
+:root:not(:has(.css-rc3vw3)) .css-rtn29s {
+  border-color: rgba(255, 38, 38, 1);
+  border: solid rgba(250, 250, 250, 0.9); 
+ background: linear-gradient(
+  145deg,
+  rgba(0, 140, 80, 0.9),
+  rgba(0, 0, 0, 0.9)
+);
+}
+
+/* Ingame Wallpaper*/
+:root:has(.css-1cdcn26) body {
+ //background-image: url(https://rottmanninfo.at/autodarts/Bilder/manu.webp);
+ background-image: url(https://rottmanninfo.at/autodarts/Bilder/manu.webp);
+ background-repeat: no-repeat;
+
+ background-size:150% 180%;
+ background-position: -520px -280px;
+}
+
+
+
+/* Offgame Wallpaper*/
+:root:not(:has(.css-1cdcn26)) body {
+ //background-image: url(https://rottmanninfo.at/autodarts/Bilder/manu.webp);
+ background-image: url(https://rottmanninfo.at/autodarts/Bilder/manu.webp);
+ background-repeat: no-repeat;
+ background-size:100% 100%;
+ background-position: 0px;
+}
+:root:has(p.chakra-text.css-1j0bqop) p.chakra-text.css-1j0bqop {
+ font-size: 24px;
+ font-family: var(--font-main);
+ font-weight: 600;
+ font-style: normal;
+ color: #ffffff;
+}
+/* --- Cricket Trefferzeilen --- */
+:root:has(div.css-1yso2z2) div.css-1yso2z2 {
+ background: linear-gradient(
+ 145deg,
+ rgba(0, 55, 35, 1),
+ rgba(0, 0, 0, 0.9)
+);
+ border: rgba(5, 15, 100, 0.9);
+ height: 110%;
+}
+:root:has(div.css-jpb1ox) div.css-jpb1ox {
+ background: linear-gradient(
+ 145deg,
+ rgba(0, 170, 120, 1),
+  rgba(0, 0, 0, 0.9)
+);
+ border: rgba(5, 100, 200, 0.9);
+ height: 110%;
+}
+/* --- Cricket Box Aktiver Spieler --- */
+:root:has(div.css-rtn29s) div.css-rtn29s {
+ height: 255px;
+ background: linear-gradient(
+ 145deg,
+ rgba(255, 38, 38, 1),
+ rgba(0, 0, 0, 0.9)
+);
+}
+/* --- Cricket Box Spieler --- */
+:root:has(div.css-hjw8x4) div.css-hjw8x4 {
+ background: var(--color-bg-box);
+ border: 2px solid var(--color-border);
+}
+/* --- Cricket Zahlenfelder --- */
+:root:has(p.chakra-text.css-1qlemha) p.chakra-text.css-1qlemha {
+ background: rgba(10, 10, 10, 0.9);
+}
+span.chakra-badge.css-n2903v {
+ font-size: 20px;
+ font-weight: 700;
+ font-style: normal;
+ color: #80cbc4;
+}
+:root:has(div.score.css-156dsds) div.score.css-156dsds {
+ background: var(--color-bg-box);
+ border: 2px solid var(--color-border);
+}
+:root:has(div.css-31a7l4) div.css-31a7l4 {
+ position: relative;
+ height: 63%;
+}
+:root:has(div.ad-ext-turn-throw.css-1p5spmi) div.ad-ext-turn-throw.css-1p5spmi {
+ background: linear-gradient(
+ 145deg,
+ rgba(0, 170, 100, 0.9),
+ rgba(0, 0, 0, 0.9)
+);
+ border: 2px solid var(--color-border);
+ height: 123%;
+}
+ div.ad-ext-player.ad-ext-player-inactive.css-1en42kf {
+ height: 1%;
+}
+ div.css-x15t8m {
+ position: relative;
+ height: 63%;
+}
+ div.css-17zewrr {
+ position: relative;
+ height: 63%;
+}
+ div.css-izrbx0 {
+ position: relative;
+ height: 63%;
+}
+ div.css-18j5zgs {
+ position: relative;
+ height: 63%;
+}
+ div.css-1f26ant {
+ position: relative;
+ height: 63%;
+}
+ div.css-1bq8o22 {
+ position: relative;
+ height: 63%;
+}
+ div.css-c04tlr {
+ position: relative;
+ height: 63%;
+}
+ div.css-k03qhj {
+ position: relative;
+ height: 63%;
+}
+ div.css-rfeml4 {
+ position: relative;
+ height: 63%;
+}
+ div.css-hjw8x4 {
+ height: 255px;
+}
+
+#ad-ext-player-display>div{
+overflow:visible;
+}
+
+
+#ad-ext-player-display > div > .fireworks.css-1cjvbe6{
+   position: fixed;
+    height: 100vh;
+    width: 68vw !important;
+    left: 18vw;
+    top: 0vh;
+	display:flex;
+}
+
+
+#ad-ext-player-display > div > .fireworks.css-1cjvbe6 > p{
+	display: flex;
+    align-items: center;
+    position: unset !important;
+}
+
+a.css-15iki5k {
+  opacity: 0;
+  
+}
+
+a.css-or32x1 {
+  opacity: 0;
+}

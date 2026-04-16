@@ -1,21 +1,37 @@
-
 <!doctype html>
+<!--
+Copyright (c) 2026 Peter Rottmann
+All rights reserved.
+Proprietary and not open source.
+No use, modification, distribution, publication, sublicensing,
+or commercial use without prior express written permission.
+Applies only to parts created by Peter Rottmann.
+Third-party components remain under their respective licenses.
+Provided "as is", without warranty.
+-->
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <title>Kamera {{ cam_id }} – Live-Stream</title>
-  <style>
-    body { margin:0; padding:10px; background:#000; color:#eee; font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    h1 { font-size:1.4rem; margin-bottom:8px; }
-    .info { font-size:0.9rem; opacity:0.8; margin-bottom:8px; }
-    img { display:block; width:100%; max-height:90vh; object-fit:contain; background:#000; }
-  </style>
+    <!-- favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon/favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon/favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}" />
+    <!-- favicon ende -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cam_view.css') }}">
+  <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
 </head>
 <body>
-  <h1>Kamera {{ cam_id }} – Live-Stream</h1>
+  <h1>
+    <span data-key="cam_view.camera_label">Kamera</span>
+    {{ cam_id }}
+    <span data-key="cam_view.live_stream_suffix">– Live-Stream</span>
+  </h1>
   <div class="info">
-    Autodarts wurde für die Kamera-Feinjustierung vorübergehend angehalten.<br>
-    Stream-URL: {{ stream_url }}
+    <span data-key="cam_view.paused_notice">Autodarts wurde für die Kamera-Feinjustierung vorübergehend angehalten.</span><br>
+    <span data-key="cam_view.stream_url_label">Stream-URL:</span> {{ stream_url }}
   </div>
   <img src="{{ stream_url }}" alt="Kamera-Stream {{ cam_id }}">
 </body>

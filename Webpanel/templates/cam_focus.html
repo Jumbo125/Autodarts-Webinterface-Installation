@@ -1,0 +1,113 @@
+<!doctype html>
+<!--
+Copyright (c) 2026 Peter Rottmann
+All rights reserved.
+Proprietary and not open source.
+No use, modification, distribution, publication, sublicensing,
+or commercial use without prior express written permission.
+Applies only to parts created by Peter Rottmann.
+Third-party components remain under their respective licenses.
+Provided "as is", without warranty.
+-->
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Kamera {{ cam_id }} – Präzisions-Fokus</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon/favicon-96x96.png') }}" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon/favicon.svg') }}" />
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}" />
+  <link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cam_focus.css') }}">
+  <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <h1>
+        <span data-key="cam_focus.camera_label">Kamera</span>
+        {{ cam_id }}
+        <span data-key="cam_focus.title_suffix">– Präzisions-Fokus</span>
+      </h1>
+      <p class="lead">
+        <span data-key="cam_focus.lead_text">Für exaktes Scharfstellen Siemensstern mittig ins Fadenkreuz bringen und am Fokus drehen. Das Messfeld startet direkt in der Bildmitte und kann per Klick versetzt werden.</span>
+      </p>
+      <div class="info">
+        <span data-key="cam_focus.stream_proxy_label">Auswertung über lokalen Stream-Proxy:</span>
+        <code>{{ proxy_stream_url }}</code>
+      </div>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('cam_view', cam_id=cam_id) }}" target="_blank" class="btn btn-secondary">
+        <span data-key="cam_focus.live_view_btn">Normales Live-Bild</span>
+      </a>
+      <a href="{{ focus_pdf_url }}" target="_blank" class="btn btn-primary">
+        <span data-key="cam_focus.focus_target_pdf_btn">Fokusziel (PDF) öffnen</span>
+      </a>
+      <a href="{{ focus_pdf_url }}?download=1" class="btn btn-secondary" download>
+        <span data-key="cam_focus.focus_target_pdf_download_btn">PDF herunterladen</span>
+      </a>
+    </div>
+  </header>
+
+  <section class="panel controls-panel">
+    <div class="control-group control-inline">
+      <label for="roiSize"><span data-key="cam_focus.roi_size_label">Messfeld</span></label>
+      <select id="roiSize">
+        <option value="90">90 × 90</option>
+        <option value="120" selected>120 × 120</option>
+        <option value="160">160 × 160</option>
+        <option value="220">220 × 220</option>
+      </select>
+    </div>
+    <div class="control-group control-inline status-chip">
+      <span data-key="cam_focus.click_hint_prefix">Status:</span>
+      <strong id="focusStatus" data-key="cam_focus.click_hint_text">Messfeld startet auf dem Fadenkreuz in der Bildmitte.</strong>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="metric-label" data-key="cam_focus.current_score_label">Schärfe aktuell</span>
+        <strong id="focusScore">—</strong>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label" data-key="cam_focus.best_score_label">Bestwert</span>
+        <strong id="focusBest">—</strong>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label" data-key="cam_focus.trend_label">Trend</span>
+        <strong id="focusTrend">—</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel viewer-panel">
+    <div id="streamWrap" class="stream-wrap">
+      <img id="focusStream" src="{{ proxy_stream_url }}" alt="Kamera-Stream {{ cam_id }}">
+      <div id="roiOverlay" class="roi-overlay" hidden>
+        <span class="roi-crosshair-line roi-crosshair-line-horizontal"></span>
+        <span class="roi-crosshair-line roi-crosshair-line-vertical"></span>
+        <span class="roi-crosshair-dot"></span>
+      </div>
+    </div>
+    <canvas id="focusCanvas" hidden></canvas>
+  </section>
+
+  <section class="panel notes-panel">
+    <ol>
+      <li data-key="cam_focus.step_1">Siemensstern oder Fokusziel möglichst plan und mittig vor die Kamera halten.</li>
+      <li data-key="cam_focus.step_2">Siemensstern möglichst exakt auf das Fadenkreuz mit Mittelpunkt ausrichten. Per Klick kannst du das Messfeld bei Bedarf verschieben.</li>
+      <li data-key="cam_focus.step_3">Fokus langsam drehen und den höchsten Bestwert suchen.</li>
+      <li data-key="cam_focus.step_4">Wenn der Wert springt, kurz warten bis das Bild ruhig ist.</li>
+    </ol>
+  </section>
+
+  <script>
+    window.camFocusConfig = {
+      proxyStreamUrl: {{ proxy_stream_url|tojson }},
+      streamUrl: {{ stream_url|tojson }},
+      camId: {{ cam_id|tojson }}
+    };
+  </script>
+  <script src="{{ url_for('static', filename='js/cam_focus.js') }}"></script>
+</body>
+</html>

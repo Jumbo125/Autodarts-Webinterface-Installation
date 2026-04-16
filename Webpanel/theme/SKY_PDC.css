@@ -1,0 +1,452 @@
+/* Autor: Björn Heggmann */
+/* Spielmodus: X01,Gotcha,Bermuda*/
+/* Bildschirmauflösung: 1920x1080 */
+
+
+:root {
+  /* ------------------------------------------ */
+  /* COLORS */
+  /* ------------------------------------------ */
+  --color-bg-main: rgba(10, 15, 30, 0.5); /* Main background */
+  --color-bg-box: rgba(10, 15, 30, 0.75); /* Box background */
+  --color-border: #ffffff; /* Border color */
+  --color-border-active: #ffaa00; /* Active player */
+  --color-text: #ffffff; /* Main text */
+  --color-text-soft: #ffffff; /* Soft text */
+  --color-shadow: 0 0 10px rgba(255, 170, 0, 0.5); /* Normal shadow */
+  --color-shadow-strong: 0 0 25px rgba(255, 170, 0, 0.8); /* Hover shadow */
+  --font-main: "ROBOTO", sans-serif;
+
+  /* ------------------------------------------ */
+  /* PLAYER BOXES - POSITION & SIZE */
+  /* ------------------------------------------ */
+  --spacing-player: 20px; /* Space between boxes */
+  --player-top-offset: 200px; /* Top offset */
+  --player-side-offset: 60px; /* Left/right offset */
+  --player-width: 350px; /* Width of all boxes */
+
+  /* ------------------------------------------ */
+  /* SCORE DISPLAY */
+  /* ------------------------------------------ */
+  --score-width: 850px; /* Score area width */
+  --score-height: 150px; /* Score elements height */
+  --menu-width: 1385px; /* Menu bar width */
+
+  /* ------------------------------------------ */
+  /* CHALKBOARD */
+  /* ------------------------------------------ */
+  --chalkboard-right: 4.8em; /* Right offset */
+  --chalkboard-top: 20em; /* Top offset */
+  --chalkboard-width: 60%; /* Width */
+  --chalkboard-height: 50%; /* Height */
+  --chalkboard-font-size: 40px; /* Font size */
+
+  /* ------------------------------------------ */
+  /* WALLPAPER - HIER ÄNDERN */
+  /* ------------------------------------------ */
+  --wallpaper-url: url("https://rottmanninfo.at/autodarts/Bilder/SKY_PDC.webp");
+}
+
+:root {
+  --row-height-3: calc((108% - 180px) / 3 - var(--spacing-player));
+}
+
+/* ============================================ */
+/* BASE STYLES */
+/* ============================================ */
+
+/* Main container */
+:root:not(:has(.css-rc3vw3)) .css-tkevr6 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  background: var(--color-bg-main);
+  background-image: var(--wallpaper-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  color: var(--color-text);
+  font-family: var(--font-main);
+}
+
+/* ============================================ */
+/* PLAYER BOXES - BASE */
+/* ============================================ */
+
+:root:not(:has(.css-rc3vw3)) .css-rtn29s,
+:root:not(:has(.css-rc3vw3)) .css-hjw8x4 {
+  position: absolute;
+  z-index: 10;
+  width: var(--player-width);
+  height: calc((100% - 180px) / 3);
+  min-height: 130px;
+  padding: 0.75rem 0.5rem;
+  box-sizing: border-box;
+  background: var(--color-bg-box);
+  color: var(--color-text);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--color-shadow);
+  transition: all 0.3s ease;
+}
+
+:root:not(:has(.css-rc3vw3)) .css-rtn29s:hover,
+:root:not(:has(.css-rc3vw3)) .css-hjw8x4:hover {
+  cursor: pointer;
+  transform: scale(1.03);
+  box-shadow: var(--color-shadow-strong);
+}
+
+/* Active player */
+:root:not(:has(.css-rc3vw3)) .css-rtn29s {
+  border-color: var(--color-border-active);
+}
+
+/* ============================================ */
+/* PLAYER DISPLAY - SCORE TOP & LARGER */
+/* ============================================ */
+
+:root:not(:has(.css-rc3vw3)) .css-y3hfdd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+  padding-top: 1.5rem;
+}
+
+:root:not(:has(.css-rc3vw3)) .css-1j0bqop {
+  order: 2;
+  max-width: 95%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-soft);
+  font-size: 25px;
+  line-height: 2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+:root:not(:has(.css-rc3vw3)) .css-1r7jzhg {
+  order: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--color-text);
+  font-size: 150px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: var(--color-shadow);
+}
+
+/* ============================================ */
+/* AVERAGES - CLEAN DISPLAY */
+/* ============================================ */
+
+/* Average container */
+:root:not(:has(.css-rc3vw3)) .css-37hv00,
+:root:not(:has(.css-rc3vw3)) [class*="average"],
+:root:not(:has(.css-rc3vw3)) .ad-ext-player-average {
+  display: flex !important;
+  flex-direction: row !important;
+  order: 3;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  margin-top: 0.1rem;
+  gap: 0.25rem !important;
+  overflow: visible !important;
+  color: var(--color-text-soft) !important;
+  font-size: 16px !important;
+  white-space: nowrap !important;
+}
+
+/* Average value */
+:root:not(:has(.css-rc3vw3)) .css-aa7b80,
+:root:not(:has(.css-rc3vw3)) [class*="avg-value"],
+:root:not(:has(.css-rc3vw3)) .ad-ext-player-average-value {
+  padding: 0.1rem 0.3rem !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-radius: 4px !important;
+  color: var(--color-border-active) !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Average label */
+:root:not(:has(.css-rc3vw3)) .css-elma0c,
+:root:not(:has(.css-rc3vw3)) [class*="avg-label"],
+:root:not(:has(.css-rc3vw3)) .ad-ext-player-average-label {
+  color: var(--color-text-soft) !important;
+  font-size: 14px !important;
+  text-transform: uppercase !important;
+  opacity: 0.9 !important;
+}
+
+/* Prevent number clipping */
+:root:not(:has(.css-rc3vw3)) .css-y3hfdd * {
+  overflow: visible !important;
+}
+
+/* ============================================ */
+/* PLAYER BOX POSITIONS */
+/* ============================================ */
+
+/* --- 1-2 players --- */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):only-child,
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(2) {
+  top: var(--player-top-offset);
+  left: var(--player-side-offset);
+  height: 800px;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(1) {
+  top: var(--player-top-offset);
+  right: var(--player-side-offset);
+  height: 800px;
+}
+
+/* --- 3-4 players --- */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(3),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(4) {
+  top: var(--player-top-offset);
+  left: var(--player-side-offset);
+  height: 400px;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(2),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(3) {
+  top: var(--player-top-offset);
+  right: var(--player-side-offset);
+  height: 400px;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(1),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(2) {
+  top: calc(var(--player-top-offset) + ((100% - 200px) / 2) + var(--spacing-player));
+  left: var(--player-side-offset);
+  height: 400px;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(4):last-child {
+  top: calc(var(--player-top-offset) + ((100% - 180px) / 2) + var(--spacing-player));
+  right: var(--player-side-offset);
+  height: 400px;
+}
+
+/* --- 5-6 players --- */
+/* Row 1 */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(5),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(1):nth-last-child(6) {
+  top: var(--player-top-offset);
+  left: var(--player-side-offset);
+  height: var(--row-height-3);
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(4),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(2):nth-last-child(5) {
+  top: var(--player-top-offset);
+  right: var(--player-side-offset);
+  height: var(--row-height-3);
+}
+
+/* Row 2 */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(3),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(3):nth-last-child(4) {
+  top: calc(var(--player-top-offset) + ((100% - 180px) / 3) + var(--spacing-player));
+  left: var(--player-side-offset);
+  height: var(--row-height-3);
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(4):nth-last-child(2),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(4):nth-last-child(3) {
+  top: calc(var(--player-top-offset) + ((100% - 180px) / 3) + var(--spacing-player));
+  right: var(--player-side-offset);
+  height: var(--row-height-3);
+}
+
+/* Row 3 */
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(5):nth-last-child(1),
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(5):nth-last-child(2) {
+  top: calc(var(--player-top-offset) + 2 * ((100% - 180px) / 3) + 2 * var(--spacing-player));
+  left: var(--player-side-offset);
+  height: var(--row-height-3);
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-player-display > div:nth-child(6):last-child {
+  top: calc(var(--player-top-offset) + 2 * ((100% - 180px) / 3) + 2 * var(--spacing-player));
+  right: var(--player-side-offset);
+  height: var(--row-height-3);
+}
+
+/* ============================================ */
+/* SCORE & TURN AREA */
+/* ============================================ */
+
+/* Score total width */
+:root:not(:has(.css-rc3vw3)) .css-1omnor5,
+:root:not(:has(.css-rc3vw3)) .css-ul22ge {
+  width: var(--score-width);
+}
+
+/* Score height */
+:root:not(:has(.css-rc3vw3)) .css-1dkgpmk,
+:root:not(:has(.css-rc3vw3)) .css-1wlduvp,
+:root:not(:has(.css-rc3vw3)) .css-sm8wdq,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .css-rrf7rv,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .score.css-156dsds,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .ad-ext-turn-throw.css-1p5spmi {
+  height: var(--score-height);
+}
+
+/* Turn area styling */
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .css-rrf7rv,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .score.css-156dsds,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .ad-ext-turn-throw.css-1p5spmi {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-bg-box);
+  color: var(--color-text);
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: var(--color-shadow);
+  text-shadow: 0 0 15px var(--color-shadow);
+  transition: all 0.3s ease;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .css-rrf7rv {
+  font-size: 32px;
+}
+
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .score.css-156dsds,
+:root:not(:has(.css-rc3vw3)) #ad-ext-turn .ad-ext-turn-throw.css-1p5spmi {
+  font-size: 100px;
+  font-weight: bold;
+}
+
+/* ============================================ */
+/* MENU BAR */
+/* ============================================ */
+
+:root:not(:has(.css-rc3vw3)) .css-19lo6pj {
+  position: relative;
+  left: 50%;
+  width: var(--menu-width);
+  transform: translateX(-50%);
+}
+
+/* Navigation */
+:root:not(:has(.css-rc3vw3)) .css-ege71s {
+  background: var(--color-bg-main);
+  color: var(--color-text);
+}
+
+/* ============================================ */
+/* CHALKBOARD */
+/* ============================================ */
+
+:root:has(.css-1u90hiz) .css-1u90hiz {
+  position: absolute;
+  top: var(--chalkboard-top);
+  right: var(--chalkboard-right);
+  width: var(--chalkboard-width);
+  height: var(--chalkboard-height);
+}
+
+:root:has(.css-1u90hiz) tbody tr td {
+  width: 50%;
+  font-size: var(--chalkboard-font-size);
+}
+
+/* ============================================ */
+/* WALLPAPER */
+/* ============================================ */
+
+:root:has(.css-1cdcn26) body,
+:root:not(:has(.css-1cdcn26)) body {
+  background-image: var(--wallpaper-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+/* ============================================ */
+/* DARK THEME OVERRIDES */
+/* ============================================ */
+
+/* Buttons without glow */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-ab3dry div.chakra-stack.css-2z3xwd div.animate__animated.animate__fadeIn.css-14kci4d div.css-17gl2zv div.chakra-stack.css-1aucrbz div.chakra-stack.css-xcvsk5 a.chakra-button.css-z1xk1r,
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-ab3dry div.chakra-stack.css-2z3xwd div.animate__animated.animate__fadeIn.css-14kci4d div.css-17gl2zv div.chakra-stack.css-1aucrbz a.chakra-button.css-z1xk1r {
+  background-color: #2b0e0e;
+  border: 1px solid #5a1d1d;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: bold;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Cards without glow */
+html body.chakra-ui-dark div#root div.css-z42oq0 div.css-nfhdnc div.css-gmuwbf
+div.chakra-card.animate__animated.animate__fadeIn.css-1fysknj {
+  background: var(--color-bg-box) !important;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Menus */
+[id^="menu-list-"] {
+  padding: 0.5rem 0 !important;
+  overflow: hidden !important;
+  background: var(--color-bg-box) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  font-family: var(--font-main) !important;
+  box-shadow: none !important;
+}
+
+[id^="menu-list-"] .chakra-menu__menuitem {
+  padding: 0.5rem 1rem !important;
+  background: transparent !important;
+  color: var(--color-text) !important;
+  border: none !important;
+  text-shadow: none !important;
+}
+
+/* Overall background color */
+div.css-vqr99b,
+div.css-nfhdnc,
+div.chakra-stack.navigation.css-ege71s {
+  background-color: rgba(25, 35, 55, 0.75);
+}
+
+/* Leg background */
+span.css-143thu1 {
+  background-color: rgba(35, 45, 65, 0.95);
+}
+
+/* Set background */
+span.css-3fr5p8 {
+  background-color: rgba(155, 120, 0, 0.95);
+}
+
+a.css-15iki5k {
+  opacity: 0;
+  
+}
+
+a.css-or32x1 {
+  opacity: 0;
+}
