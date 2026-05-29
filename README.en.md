@@ -48,6 +48,7 @@ This project provides two preconfigured images for **Raspberry Pi 4** and **Rasp
   
 - **Raspberry Pi 5**: Full installation with graphical user interface including QR codes  
   Autodarts starts automatically when the system boots, so the setup is ready to use immediately.
+  **NEW** **Since update 1.660, you can switch between headless and standard operation.**
   **[download_LINK](https://autodarts-pi5-download.peter-2b8.workers.dev/download)**
 
 ---
