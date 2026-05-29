@@ -101,6 +101,7 @@ Da der Raspberry Pi 4 ohne grafische Oberfläche betrieben wird, erfolgt die Bed
 <p align="left">
   <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="30%">
 </p>
+
 Die Raspberry-Pi-5-Variante ist als **vollwertige Installation mit grafischer Oberfläche** vorgesehen.
 **SEIT NEUEM KANN MAN IM WEBPANEL UMSCHALTEN AUF HEADLESS BETRIEB, somit ist beides möglich!!!**
 
