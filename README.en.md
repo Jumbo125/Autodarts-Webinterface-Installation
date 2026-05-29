@@ -89,18 +89,22 @@ Since the Raspberry Pi 4 runs without a graphical interface, it is operated from
 - PC
 - smartphone
 
-#### Raspberry Pi 5 – Full installation
+#### Raspberry Pi 5 – Full Installation
+
 <p align="left">
   <img src="docs/images/Raspberry_Pi_5_installation.jpg" alt="Autodarts Raspberry Images Preview" width="30%">
 </p>
-The Raspberry Pi 5 version is designed as a **full installation with graphical user interface**.
 
-Required hardware:
+Die Raspberry Pi 5 version is intended as a **full installation with a graphical user interface**.
 
-- monitor
-- mouse
-- keyboard
-- Wi-Fi dongle or LAN cable
+**NEW: Headless mode can now be enabled directly in the web panel, so both operating modes are possible!**
+
+Required components:
+
+- Monitor
+- Mouse
+- Keyboard
+- WLAN dongle or LAN cable
 
 After startup, Autodarts opens automatically in the browser.
 
