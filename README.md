@@ -303,6 +303,7 @@ Die jeweiligen Rechte verbleiben bei den ursprünglichen Urhebern.
 - **Darts WLED**  
   Repository: `https://github.com/lbormann/darts-wled`  
   Lizenz: **GNU GPL v3**
+  seit 26.06.2026
   Repository: `https://github.com/Peschi90/darts-wled`
   Lizenz: **GNU GPL v3**
 
