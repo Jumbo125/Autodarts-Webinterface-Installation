@@ -289,11 +289,17 @@ All rights remain with the respective original authors.
 
 - **Darts Caller**  
   Repository: `https://github.com/lbormann/darts-caller`  
-  License: **GNU GPL v3**
+  Lizenz: **GNU GPL v3**  
+  since 26.06.2026   
+  Repository: `https://github.com/Peschi90/darts-caller`   
+  Lizenz: **GNU GPL v3**   
 
 - **Darts WLED**  
   Repository: `https://github.com/lbormann/darts-wled`  
-  License: **GNU GPL v3**
+  Lizenz: **GNU GPL v3**   
+  since 26.06.2026   
+  Repository: `https://github.com/Peschi90/darts-wled`   
+  Lizenz: **GNU GPL v3**   
 
 Please note that only the respective license terms of third-party software apply to those components.
 
