@@ -4,6 +4,31 @@
 
 <h1 align="center">Autodarts Raspberry Images</h1>
 
+---
+
+<h2 align="center">🚀 Autodarts 2.0 – One-Click-Installation</h2>
+
+<p align="center">
+  <strong>Für alle, die noch eine ältere Autodarts-Version verwenden:</strong><br>
+  Hier erfährst du, wie du Autodarts 2.0 mit nur einem Klick installieren kannst.
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/E55NIZKzLyM?si=zCe3rvS-UROSinny">
+    <img src="https://img.youtube.com/vi/E55NIZKzLyM/hqdefault.jpg" alt="Videoanleitung: Autodarts 2.0 One-Click-Installation" width="300">
+  </a>
+</p>
+
+<p align="center">
+  🎥 <strong><a href="https://youtu.be/E55NIZKzLyM?si=zCe3rvS-UROSinny">Videoanleitung zur One-Click-Installation ansehen</a></strong>
+</p>
+
+<p align="center">
+  ✅ <strong>Wichtig für Neuinstallationen:</strong> Die aktuell angebotenen Download-Images sind bereits für <strong>Autodarts 2.0</strong> konfiguriert. Eine zusätzliche Installation ist daher nicht notwendig.
+</p>
+
+---
+
 <p align="center">
   <a href="https://youtu.be/vZOtYZ-dGQs"> 
     <img src="https://img.youtube.com/vi/vZOtYZ-dGQs/maxresdefault.jpg" alt="Vorschauvideo" width="400">
